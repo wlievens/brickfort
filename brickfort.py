@@ -5,9 +5,13 @@ from math import floor, ceil, atan2, pi
 SCALE = 20
 SCALE_UP = 8
 
+color_blue             = 1
 color_green            = 2
 color_red              = 4
 color_brown            = 6
+color_yellow           = 14
+color_orange           = 25
+color_lime             = 27
 color_trans_light_blue = 43
 color_light_bley       = 71
 color_dark_bley        = 72
@@ -253,46 +257,61 @@ def export(file, size, river, riverbed, castle_outline):
 			if px1 == px2:
 				x = px1 + 1
 				if py1 < py2:
+					color = color_light_bley
+					color = color_yellow
 					reverse = False
 					y1 = py1
 					y2 = py2
 					for py in range(y1 + 1, y2 + 1):
 						for px in range(x - plank_width, x):
 							grid_planks[px][py] = True
-					if concave_angles[n]:
+					if not odd and concave_angles[n]:
 						for px in range(x - plank_width, x):
 							for py in range(y1 + 1 - plank_width, y1 + 1):
-								#emit_part(f, color_red, part_brick_1x1, px, py, h3+3, 1)
 								grid_planks[px][py] = True
 					if parapet:
 						if odd:
-							emit_part(f, color_light_bley, part_brick_1x1, x, y1 + 1, h3, 1)
+							emit_part(f, color, part_brick_1x1, x, y1 + 1, h3, 1)
 						else:
 							if concave_angles[n]:
-								emit_part(f, color_light_bley, part_brick_3x1, x, y1 + 1, h3, 1)
+								emit_part(f, color, part_brick_3x1, x, y1 + 1, h3, 1)
 							else:
-								emit_part(f, color_light_bley, part_brick_4x1, x, y1, h3, 1)
+								emit_part(f, color, part_brick_4x1, x, y1, h3, 1)
 						for y in range(y1 + (2 if odd else 4), y2 - (0 if odd else 2), 4):
-							emit_part(f, color_light_bley, part_brick_4x1, x, y, h3, 1)
-						if not odd:
-							emit_part(f, color_light_bley, part_brick_1x1, x, y2, h3, 0)
+							emit_part(f, color, part_brick_4x1, x, y, h3, 1)
+						if not odd and not concave_angles[(n + 1) % count]:
+							emit_part(f, color, part_brick_1x1, x, y2, h3, 0)
 				else:
+					color = color_light_bley
+					color = color_red
 					reverse = True
 					y1 = py2 + 2 - (4 if odd else 0)
 					y2 = py1 + 2 - (4 if odd else 0)
 					for py in range(y1 + 3, y2 - 1):
 						for px in range(x, x + plank_width):
 							grid_planks[px][py] = True
+					if not odd and concave_angles[n]:
+						for px in range(x, x + plank_width):
+							for py in range(y2 - 1, y2 - 1 + plank_width):
+								#emit_part(f, color_red, part_brick_1x1, px, py, height * 3 - 3, 1)
+								grid_planks[px][py] = True
 					if parapet:
 						if odd:
-							emit_part(f, color_light_bley, part_brick_3x1, x - 1, y1 + 3, h3, 1)
+							emit_part(f, color, part_brick_3x1, x - 1, y1 + 3, h3, 1)
 						else:
 							if not concave_angles[(n + 1) % count]:
-								emit_part(f, color_light_bley, part_brick_1x1, x - 1, y1 - 1, h3, 0)
-						for y in range(y1 + (6 if odd else 0), y2 + (+2 if odd else -2), 4):
-							emit_part(f, color_light_bley, part_brick_4x1, x - 1, y, h3, 1)
+								emit_part(f, color, part_brick_1x1, x - 1, y1 - 1, h3, 0)
+						for y in range(y1 + (6 if odd else 0), y2 - (2 if odd else 6), 4):
+							emit_part(f, color, part_brick_4x1, x - 1, y, h3, 1)
 						if odd:
-							emit_part(f, color_light_bley, part_brick_1x1, x - 1, y2 + 2, h3, 0)
+							emit_part(f, color, part_brick_4x1, x - 1, y2 - (2 if odd else 4), h3, 1)
+							if not concave_angles[n]:
+								emit_part(f, color, part_brick_1x1, x - 1, y2 + 2, h3, 0)
+						else:
+							if concave_angles[n]:
+								emit_part(f, color, part_brick_3x1, x - 1, y2 - 4, h3, 1)
+							else:
+								emit_part(f, color, part_brick_4x1, x - 1, y2 - (2 if odd else 4), h3, 1)
 				if wall:
 					for y in range(y1, y2, 4):
 						color = color_light_bley if random.random() > 0.2 else color_dark_bley
@@ -300,35 +319,46 @@ def export(file, size, river, riverbed, castle_outline):
 			if py1 == py2:
 				y = py1
 				if px1 < px2:
+					color = color_light_bley
+					color = color_lime
 					reverse = False
 					x1 = px1 + (4 if odd else 0)
 					x2 = px2 + (4 if odd else 0)
-					for px in range(x1 + 1, x2 + 1 - plank_width):
+					for px in range(x1 + 1, x2 - 3):
 						for py in range(y + 1, y + 1 + plank_width):
 							grid_planks[px][py] = True
-					if concave_angles[n]:
+					if not odd and concave_angles[n]:
 						for px in range(x1 - plank_width + 1, x1 + 1):
 							for py in range(y + 1, y + 1 + plank_width):
 								grid_planks[px][py] = True
 					if parapet:
 						if concave_angles[n]:
-							emit_part(f, color_light_bley, part_brick_3x1, x1 + 1, y, h3, 0)
+							emit_part(f, color, part_brick_3x1, x1 + 1, y, h3, 0)
 						else:
 							if odd:
-								emit_part(f, color_light_bley, part_brick_2x1, x1 - 4, y, h3, 0)
-							emit_part(f, color_light_bley, part_brick_4x1, x1 - (2 if odd else 0), y, h3, 0)
-						for x in range(x1 + (2 if odd else 4), x2 - 2, 4):
-							emit_part(f, color_light_bley, part_brick_4x1, x, y, h3, 0)
-						if not odd:
-							emit_part(f, color_light_bley, part_brick_1x1, x2, y, h3, 0)
+								emit_part(f, color, part_brick_2x1, x1 - 4, y, h3, 0)
+							emit_part(f, color, part_brick_4x1, x1 - (2 if odd else 0), y, h3, 0)
+						for x in range(x1 + (2 if odd else 4), x2 - 6, 4):
+							emit_part(f, color, part_brick_4x1, x, y, h3, 0)
+						if odd:
+							if concave_angles[(n + 1) % count]:
+								emit_part(f, color, part_brick_3x1, x2 - 6, y, h3, 0)
+							else:
+								emit_part(f, color, part_brick_4x1, x2 - 6, y, h3, 0)
+						else:
+							emit_part(f, color, part_brick_4x1, x2 - 4, y, h3, 0)
+							if not concave_angles[(n + 1) % count]:
+								emit_part(f, color, part_brick_1x1, x2, y, h3, 0)
 				else:
+					color = color_light_bley
+					color = color_blue
 					reverse = True
 					x1 = px2 + 2
 					x2 = px1 + 2
 					for px in range(x1 - 1, x2 - 1):
 						for py in range(y + 1 - plank_width, y + 1):
 							grid_planks[px][py] = True
-					if concave_angles[n]:
+					if not odd and concave_angles[n]:
 						for px in range(x2 - 1, x2 - 1 + plank_width):
 							for py in range(y + 1 - plank_width, y + 1):
 								grid_planks[px][py] = True
@@ -336,25 +366,26 @@ def export(file, size, river, riverbed, castle_outline):
 						if odd:
 							pass
 						else:
-							emit_part(f, color_light_bley, part_brick_1x1, x1 - 1, y + 1, h3, 0)
+							emit_part(f, color, part_brick_1x1, x1 - 1, y + 1, h3, 0)
 						for x in range(x1 - (2 if odd else 0), x2 - (2 if odd else 6), 4):
-							emit_part(f, color_light_bley, part_brick_4x1, x, y + 1, h3, 0)
+							emit_part(f, color, part_brick_4x1, x, y + 1, h3, 0)
 						if odd:
 							if not concave_angles[n]:
-								emit_part(f, color_light_bley, part_brick_1x1, x2 - 2, y + 1, h3, 0)
+								emit_part(f, color, part_brick_1x1, x2 - 2, y + 1, h3, 0)
 						else:
 							if concave_angles[n]:
-								emit_part(f, color_light_bley, part_brick_3x1, x2 - 4, y + 1, h3, 0)
+								emit_part(f, color, part_brick_3x1, x2 - 4, y + 1, h3, 0)
 							else:
-								emit_part(f, color_light_bley, part_brick_4x1, x2 - 4, y + 1, h3, 0)
+								emit_part(f, color, part_brick_4x1, x2 - 4, y + 1, h3, 0)
 				if wall:
 					for x in range(x1, x2, 4):
 						color = color_light_bley if random.random() > 0.2 else color_dark_bley
 						emit_part(f, color, part_brick_4x2, x - offset, y, h3, 0)
-			# Walking planks
-			if planks:
-				list = lay_bricks(size, grid_planks, parts_plates)
-				emit_part_list(f, h3, color_brown, list)
+		# Walking planks
+		if planks:
+			emit_step(f, 'planks ' + str(n))
+			list = lay_bricks(size, grid_planks, parts_plates)
+			emit_part_list(f, h3, color_brown, list)
 	
 	#list = lay_bricks(size, castle_outline, parts_bricks)
 	#emit_part_list(f, 0, color_light_bley, list)
@@ -525,7 +556,8 @@ def generate_castle_outline(size, offset):
 	
 map_size = 32 * 3
 
-random.seed(531469)
+random.seed(52)
+random.seed(999)
 
 grid_river = generate_river(map_size)
 grid_riverbed = generate_riverbed(map_size, grid_river)
