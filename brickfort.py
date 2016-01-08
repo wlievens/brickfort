@@ -215,9 +215,8 @@ def export(file, size, river, riverbed, castle_outline):
 	pi2 = 2 * pi
 	count = len(castle_outline)
 	print castle_outline
-	height = 7 # must be odd
+	height = 10 # must be even
 	grid_planks  = create_matrix(size)
-	grid_parapet = create_matrix(size)
 	grid_merlons = create_matrix(size)
 	plank_width = 4
 	concave_angles = []
@@ -236,8 +235,11 @@ def export(file, size, river, riverbed, castle_outline):
 	for h in range(height):
 		emit_step(f, 'wall ' + str(n))
 		h3 = h * 3
-		wall = h < height - 1
-		parapet = not wall
+		wall    = h <= height - 5
+		parapet = h >= height - 4 and h <= height - 2
+		planks  = h == height - 4
+		merlon  = h == height - 1
+		print h,height,wall,parapet,planks,merlon
 		odd = (h % 2) == 1
 		offset = 2 if odd else 0
 		for n in range(count):
@@ -254,8 +256,6 @@ def export(file, size, river, riverbed, castle_outline):
 					reverse = False
 					y1 = py1
 					y2 = py2
-					for py in range(y1, y2 + 1):
-						grid_parapet[x][py] = True
 					for py in range(y1 + 1, y2 + 1):
 						for px in range(x - plank_width, x):
 							grid_planks[px][py] = True
@@ -276,8 +276,6 @@ def export(file, size, river, riverbed, castle_outline):
 					reverse = True
 					y1 = py2 + 2 - (4 if odd else 0)
 					y2 = py1 + 2 - (4 if odd else 0)
-					for py in range(y1 + 3, y2):
-						grid_parapet[x - 1][py] = True
 					for py in range(y1 + 3, y2 - 1):
 						for px in range(x, x + plank_width):
 							grid_planks[px][py] = True
@@ -296,8 +294,6 @@ def export(file, size, river, riverbed, castle_outline):
 					reverse = False
 					x1 = px1 + (4 if odd else 0)
 					x2 = px2 + (4 if odd else 0)
-					for px in range(x1 + 1, x2 - 2):
-						grid_parapet[px][y] = True
 					for px in range(x1 + 1, x2 + 1 - plank_width):
 						for py in range(y + 1, y + 1 + plank_width):
 							grid_planks[px][py] = True
@@ -317,8 +313,6 @@ def export(file, size, river, riverbed, castle_outline):
 					reverse = True
 					x1 = px2 + 2
 					x2 = px1 + 2
-					for px in range(x1 - 2, x2 - 1):
-						grid_parapet[px][y + 1] = True
 					for px in range(x1 - 1, x2 - 1):
 						for py in range(y + 1 - plank_width, y + 1):
 							grid_planks[px][py] = True
@@ -338,20 +332,16 @@ def export(file, size, river, riverbed, castle_outline):
 					for x in range(x1, x2, 4):
 						color = color_light_bley if random.random() > 0.2 else color_dark_bley
 						emit_part(f, color, part_brick_4x2, x - offset, y, h3, 0)
+			# Walking planks
+			if planks:
+				list = lay_bricks(size, grid_planks, parts_plates)
+				emit_part_list(f, h3, color_brown, list)
 	
-	# Walking planks
-	#print_matrix(size, grid_planks)
-	list = lay_bricks(size, grid_planks, parts_plates)
-	emit_part_list(f, 3 * (height - 1), color_brown, list)
-	
-	# Parapet
-	#print_matrix(size, grid_parapet)
-	#list = lay_bricks(size, grid_parapet, parts_bricks)
-	#emit_part_list(f, 3 * height, color_light_bley, list)
-		
 	#list = lay_bricks(size, castle_outline, parts_bricks)
 	#emit_part_list(f, 0, color_light_bley, list)
 	
+	f.write('1 71 700 -232 890 0 0 1 0 1 0 -1 0 0 dude.ldr\n')
+
 	f.write('0\n')
 
 	
