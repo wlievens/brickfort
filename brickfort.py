@@ -215,7 +215,7 @@ def export(file, size, river, riverbed, castle_outline):
 	pi2 = 2 * pi
 	count = len(castle_outline)
 	print castle_outline
-	height = 10 # must be even
+	height = 9 # must be odd
 	grid_planks  = create_matrix(size)
 	grid_merlons = create_matrix(size)
 	plank_width = 4
@@ -235,9 +235,9 @@ def export(file, size, river, riverbed, castle_outline):
 	for h in range(height):
 		emit_step(f, 'wall ' + str(n))
 		h3 = h * 3
-		wall    = h <= height - 5
-		parapet = h >= height - 4 and h <= height - 2
-		planks  = h == height - 4
+		wall    = h <= height - 4
+		parapet = h >= height - 3 and h <= height - 2
+		planks  = h == height - 3
 		merlon  = h == height - 1
 		print h,height,wall,parapet,planks,merlon
 		odd = (h % 2) == 1
@@ -265,13 +265,17 @@ def export(file, size, river, riverbed, castle_outline):
 								#emit_part(f, color_red, part_brick_1x1, px, py, h3+3, 1)
 								grid_planks[px][py] = True
 					if parapet:
-						if concave_angles[n]:
-							emit_part(f, color_light_bley, part_brick_3x1, x, y1 + 1, h3, 1)
+						if odd:
+							emit_part(f, color_light_bley, part_brick_1x1, x, y1 + 1, h3, 1)
 						else:
-							emit_part(f, color_light_bley, part_brick_4x1, x, y1, h3, 1)
-						for y in range(y1 + 4, y2 - 2, 4):
+							if concave_angles[n]:
+								emit_part(f, color_light_bley, part_brick_3x1, x, y1 + 1, h3, 1)
+							else:
+								emit_part(f, color_light_bley, part_brick_4x1, x, y1, h3, 1)
+						for y in range(y1 + (2 if odd else 4), y2 - (0 if odd else 2), 4):
 							emit_part(f, color_light_bley, part_brick_4x1, x, y, h3, 1)
-						emit_part(f, color_light_bley, part_brick_1x1, x, y2, h3, 0)
+						if not odd:
+							emit_part(f, color_light_bley, part_brick_1x1, x, y2, h3, 0)
 				else:
 					reverse = True
 					y1 = py2 + 2 - (4 if odd else 0)
@@ -280,10 +284,15 @@ def export(file, size, river, riverbed, castle_outline):
 						for px in range(x, x + plank_width):
 							grid_planks[px][py] = True
 					if parapet:
-						if not concave_angles[(n + 1) % count]:
-							emit_part(f, color_light_bley, part_brick_1x1, x - 1, y1 - 1, h3, 0)
-						for y in range(y1, y2 - 2, 4):
+						if odd:
+							emit_part(f, color_light_bley, part_brick_3x1, x - 1, y1 + 3, h3, 1)
+						else:
+							if not concave_angles[(n + 1) % count]:
+								emit_part(f, color_light_bley, part_brick_1x1, x - 1, y1 - 1, h3, 0)
+						for y in range(y1 + (6 if odd else 0), y2 + (+2 if odd else -2), 4):
 							emit_part(f, color_light_bley, part_brick_4x1, x - 1, y, h3, 1)
+						if odd:
+							emit_part(f, color_light_bley, part_brick_1x1, x - 1, y2 + 2, h3, 0)
 				if wall:
 					for y in range(y1, y2, 4):
 						color = color_light_bley if random.random() > 0.2 else color_dark_bley
@@ -305,10 +314,13 @@ def export(file, size, river, riverbed, castle_outline):
 						if concave_angles[n]:
 							emit_part(f, color_light_bley, part_brick_3x1, x1 + 1, y, h3, 0)
 						else:
-							emit_part(f, color_light_bley, part_brick_4x1, x1, y, h3, 0)
-						for x in range(x1 + 4, x2 - 2, 4):
+							if odd:
+								emit_part(f, color_light_bley, part_brick_2x1, x1 - 4, y, h3, 0)
+							emit_part(f, color_light_bley, part_brick_4x1, x1 - (2 if odd else 0), y, h3, 0)
+						for x in range(x1 + (2 if odd else 4), x2 - 2, 4):
 							emit_part(f, color_light_bley, part_brick_4x1, x, y, h3, 0)
-						emit_part(f, color_light_bley, part_brick_1x1, x2, y, h3, 0)
+						if not odd:
+							emit_part(f, color_light_bley, part_brick_1x1, x2, y, h3, 0)
 				else:
 					reverse = True
 					x1 = px2 + 2
@@ -321,13 +333,20 @@ def export(file, size, river, riverbed, castle_outline):
 							for py in range(y + 1 - plank_width, y + 1):
 								grid_planks[px][py] = True
 					if parapet:
-						emit_part(f, color_light_bley, part_brick_1x1, x1 - 1, y + 1, h3, 0)
-						for x in range(x1, x2 - 6, 4):
-							emit_part(f, color_light_bley, part_brick_4x1, x, y + 1, h3, 0)
-						if concave_angles[n]:
-							emit_part(f, color_light_bley, part_brick_3x1, x2 - 4, y + 1, h3, 0)
+						if odd:
+							pass
 						else:
-							emit_part(f, color_light_bley, part_brick_4x1, x2 - 4, y + 1, h3, 0)
+							emit_part(f, color_light_bley, part_brick_1x1, x1 - 1, y + 1, h3, 0)
+						for x in range(x1 - (2 if odd else 0), x2 - (2 if odd else 6), 4):
+							emit_part(f, color_light_bley, part_brick_4x1, x, y + 1, h3, 0)
+						if odd:
+							if not concave_angles[n]:
+								emit_part(f, color_light_bley, part_brick_1x1, x2 - 2, y + 1, h3, 0)
+						else:
+							if concave_angles[n]:
+								emit_part(f, color_light_bley, part_brick_3x1, x2 - 4, y + 1, h3, 0)
+							else:
+								emit_part(f, color_light_bley, part_brick_4x1, x2 - 4, y + 1, h3, 0)
 				if wall:
 					for x in range(x1, x2, 4):
 						color = color_light_bley if random.random() > 0.2 else color_dark_bley
@@ -340,7 +359,7 @@ def export(file, size, river, riverbed, castle_outline):
 	#list = lay_bricks(size, castle_outline, parts_bricks)
 	#emit_part_list(f, 0, color_light_bley, list)
 	
-	f.write('1 71 700 -232 890 0 0 1 0 1 0 -1 0 0 dude.ldr\n')
+	f.write('1 71 690 -224 880 0 0 1 0 1 0 -1 0 0 dude.ldr\n')
 
 	f.write('0\n')
 
