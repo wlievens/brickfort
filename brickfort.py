@@ -194,8 +194,8 @@ def export(file, size, river, riverbed, castle_outline):
 	# Castle outline
 	count = len(castle_outline)
 	print castle_outline
-	for h in range(2):
-		offset = (h % 2) * 2
+	for h in range(8):
+		odd = (h % 2) == 1
 		for n in range(count):
 			p1 = castle_outline[n]
 			p2 = castle_outline[(n + 1) % count]
@@ -203,29 +203,35 @@ def export(file, size, river, riverbed, castle_outline):
 			py1 = p1[1]
 			px2 = p2[0]
 			py2 = p2[1]
-			emit_part(f, color_red, part_brick_1x1, px1, py1, 6, 1)
+			emit_part(f, color_red, part_brick_1x1, px1, py1, 3+h*3, 1)
 			if px1 == px2:
 				if py1 < py2:
 					x = px1 + 1
 					y1 = py1
 					y2 = py2
+					offset = 2 if odd else 0
 				else:
-					x = px1 - 1
-					y1 = py2
-					y2 = py1
+					x = px1 + 1
+					y1 = py2 + 2 - (4 if odd else 0)
+					y2 = py1 + 2 - (4 if odd else 0)
+					offset = 2 if odd else 0
 				for y in range(y1, y2, 4):
-					emit_part(f, color_light_bley, part_brick_4x2, x - 1, y, h * 3, 1)
+					color = color_light_bley if random.random() > 0.2 else color_dark_bley
+					emit_part(f, color, part_brick_4x2, x - 1, y + offset, h * 3, 1)
 			if py1 == py2:
 				if px1 < px2:
 					y = py1
-					x1 = px1
-					x2 = px2
+					x1 = px1 + (4 if odd else 0)
+					x2 = px2 + (4 if odd else 0)
+					offset = -2 if odd else 0
 				else:
-					y = py1 - 2
-					x1 = px2
-					x2 = px1
+					y = py1
+					x1 = px2 + 2
+					x2 = px1 + 2
+					offset = -2 if odd else 0
 				for x in range(x1, x2, 4):
-					emit_part(f, color_light_bley, part_brick_4x2, x - offset, y, h * 3, 0)
+					color = color_light_bley if random.random() > 0.2 else color_dark_bley
+					emit_part(f, color, part_brick_4x2, x + offset, y, h * 3, 0)
 		
 	#list = lay_bricks(size, castle_outline, parts_bricks)
 	#emit_part_list(f, 0, color_light_bley, list)
@@ -295,7 +301,7 @@ def find_castle_offset(size, river, riverbed):
 
 def generate_castle_floor(size, offset):
 	grid = create_matrix(size)
-	margin = 2
+	margin = 4
 	for x in range(offset + margin, size - margin):
 		for y in range(margin, size - margin):
 			grid[x][y] = True
@@ -304,7 +310,7 @@ def generate_castle_floor(size, offset):
 def generate_castle_outline(size, offset):
 	def clip4(x, y):
 		return (x - x % 4, y - y % 4)
-	margin = 2
+	margin = 4
 	min_x = offset + margin
 	min_y = margin
 	max_x = size - margin - 1
@@ -364,7 +370,7 @@ def generate_castle_outline(size, offset):
 
 map_size = 32*3
 
-random.seed(123456)
+random.seed(38746)
 
 grid_river = generate_river(map_size)
 grid_riverbed = generate_riverbed(map_size, grid_river)
