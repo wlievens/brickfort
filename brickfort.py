@@ -2,6 +2,8 @@ import sys
 import random
 from math import floor, ceil, atan2, pi
 
+DEBUG = False
+
 SCALE = 20
 SCALE_UP = 8
 
@@ -69,14 +71,14 @@ part_sizes[part_corner_2x2]      = (  2,  2,  3 )
 
 part_offsets = {}
 
-part_offsets[part_corner_2x2]    = ( 10, -10, 0 )
+part_offsets[part_corner_2x2]    = [( -10, -10, 0 ), ( 10, -10, 0 ), ( 10, 10, 0 ), ( -10, 10, 0 )]
 
 
 rotate_table_xy = [None for n in range(4)]
 rotate_table_xy[0] = [1,0,0,0,1,0,0,0,1]
 rotate_table_xy[1] = [0,0,-1,0,1,0,1,0,0]
-rotate_table_xy[2] = []
-rotate_table_xy[3] = []
+rotate_table_xy[2] = [-1,0,0,0,1,0,0,0,-1]
+rotate_table_xy[3] = [0,0,1,0,1,0,-1,0,0]
 
 parts_plates = [part_plate_8x8, part_plate_8x4, part_plate_4x4, part_plate_8x2, part_plate_6x2, part_plate_4x2, part_plate_2x2, part_plate_4x1, part_plate_2x1, part_plate_1x1]
 parts_bricks = [part_brick_4x2, part_brick_4x1, part_brick_3x1, part_brick_2x1, part_brick_1x1]
@@ -122,10 +124,10 @@ def emit_part(f, color, part, x, y, z, rxy = 0):
 	y = SCALE * y + SCALE * size[1 if rxy % 2 == 0 else 0] / 2
 	z = SCALE_UP * -z - SCALE_UP * size[2]
 	if part in part_offsets:
-		offset = part_offsets[part]
-		x = x + offset[0]
-		y = y + offset[1]
-		z = z + offset[2]
+		offsets = part_offsets[part]
+		x = x + offsets[rxy][0]
+		y = y + offsets[rxy][1]
+		z = z + offsets[rxy][2]
 	rxy = rotate_table_xy[rxy]
 	f.write('1 %s %s %s %s %s %s %s %s %s %s %s %s %s %s.dat\n' % (color, x, z, y, rxy[0], rxy[1], rxy[2], rxy[3], rxy[4], rxy[5], rxy[6], rxy[7], rxy[8], part))
 
@@ -212,14 +214,15 @@ def export(file, size, river, riverbed, castle_outline):
 		emit_part_list(f, n - 1, color_green, list)
 		
 	# Debug corner
-	#emit_part(f, color_red, part_brick_4x1, 0, 0, 0, 0)
-	#emit_part(f, color_red, part_brick_4x1, 8, 0, 0, 1)
+	emit_part(f, color_red, part_corner_2x2, 0, 0, 0, 0)
+	emit_part(f, color_red, part_corner_2x2, 2, 0, 0, 1)
+	emit_part(f, color_red, part_corner_2x2, 4, 0, 0, 2)
+	emit_part(f, color_red, part_corner_2x2, 6, 0, 0, 3)
 	
 	# Castle outline
 	pi2 = 2 * pi
 	count = len(castle_outline)
-	print castle_outline
-	height = 9 # must be odd
+	height = 11 # must be odd
 	grid_planks  = create_matrix(size)
 	grid_merlons = create_matrix(size)
 	plank_width = 4
@@ -260,10 +263,18 @@ def export(file, size, river, riverbed, castle_outline):
 				x = px1 + 1
 				if py1 < py2:
 					color = color_light_bley
-					color = color_yellow
+					if DEBUG:
+						color = color_yellow
 					reverse = False
 					y1 = py1
 					y2 = py2
+					if merlon:
+						if concave0:
+							emit_part(f, color, part_corner_2x2, px1 + 1, py1 + 1, h3, 0)
+						else:
+							emit_part(f, color, part_corner_2x2, px1, py1, h3, 1)
+						for py in range(y1 + 3, y2 - 1, 3):
+							emit_part(f, color, part_brick_2x1, px1 + 1, py, h3, 1)
 					for py in range(y1 + 1, y2 + 1):
 						for px in range(x - plank_width, x):
 							grid_planks[px][py] = True
@@ -291,10 +302,18 @@ def export(file, size, river, riverbed, castle_outline):
 							emit_part(f, color, part_brick_1x1, x, y2, h3, 0)
 				else:
 					color = color_light_bley
-					color = color_red
+					if DEBUG:
+						color = color_red
 					reverse = True
 					y1 = py2 + 2 - (4 if odd else 0)
 					y2 = py1 + 2 - (4 if odd else 0)
+					if merlon:
+						if concave0:
+							emit_part(f, color, part_corner_2x2, px1 - 1, py1 - 1, h3, 2)
+						else:
+							emit_part(f, color, part_corner_2x2, px1, py1, h3, 3)
+						for py in range(y1 + 1, y2 - 3, 3):
+							emit_part(f, color_red, part_brick_2x1, px1, py, h3, 1)
 					for py in range(y1 + 3, y2 - 1):
 						for px in range(x, x + plank_width):
 							grid_planks[px][py] = True
@@ -328,10 +347,18 @@ def export(file, size, river, riverbed, castle_outline):
 				y = py1
 				if px1 < px2:
 					color = color_light_bley
-					color = color_lime
+					if DEBUG:
+						color = color_lime
 					reverse = False
 					x1 = px1 + (4 if odd else 0)
 					x2 = px2 + (4 if odd else 0)
+					if merlon:
+						if concave0:
+							emit_part(f, color, part_corner_2x2, px1 + 1, py1 - 1, h3, 3)
+						else:
+							emit_part(f, color, part_corner_2x2, px1, py1, h3, 0)
+						for px in range(x1 + 3, x2 - 2, 3):
+							emit_part(f, color, part_brick_2x1, px, py1, h3, 0)
 					for px in range(x1 + 1, x2 - 3):
 						for py in range(y + 1, y + 1 + plank_width):
 							grid_planks[px][py] = True
@@ -356,10 +383,18 @@ def export(file, size, river, riverbed, castle_outline):
 							emit_part(f, color, part_brick_1x1, x2, y, h3, 0)
 				else:
 					color = color_light_bley
-					color = color_blue
+					if DEBUG:
+						color = color_blue
 					reverse = True
 					x1 = px2 + 2
 					x2 = px1 + 2
+					if merlon:
+						if concave0:
+							emit_part(f, color, part_corner_2x2, px1 - 1, py1 + 1, h3, 1)
+						else:
+							emit_part(f, color, part_corner_2x2, px1, py1, h3, 2)
+						for px in range(x1 + 1, x2 - 4, 3):
+							emit_part(f, color, part_brick_2x1, px, py1 + 1, h3, 0)
 					for px in range(x1 - 1, x2 - 1):
 						for py in range(y + 1 - plank_width, y + 1):
 							grid_planks[px][py] = True
@@ -397,10 +432,7 @@ def export(file, size, river, riverbed, castle_outline):
 			list = lay_bricks(size, grid_planks, parts_plates)
 			emit_part_list(f, h3, color_brown, list)
 	
-	#list = lay_bricks(size, castle_outline, parts_bricks)
-	#emit_part_list(f, 0, color_light_bley, list)
-	
-	f.write('1 71 690 -224 880 0 0 1 0 1 0 -1 0 0 dude.ldr\n')
+	f.write('1 71 850 -272 880 0 0 1 0 1 0 -1 0 0 dude.ldr\n')
 
 	f.write('0\n')
 
@@ -487,6 +519,7 @@ def unique_keep_order(seq):
 
 def sanitize_path(path):
 	path = unique_keep_order(path)
+	print 5,path
 	updated = True
 	while updated:
 		updated = False
@@ -503,19 +536,41 @@ def sanitize_path(path):
 
 
 def generate_castle_outline(size, offset):
+	def clip_x(x):
+		return x - x % 8
+	def clip_y(y):
+		return y - y % 8
 	def clip(x, y):
-		return (x - x % 8, y - y % 8)
+		return (clip_x(x), clip_y(y))
 	margin = 8
-	min_x = ((offset + margin - 1) / margin) * margin
-	min_y = margin
-	max_x = size - margin - 1
-	max_y = size - margin - 1
+	min_x = clip_x(offset + margin - 1)
+	min_y = clip_y(margin)
+	max_x = clip_x(size - margin)
+	max_y = clip_x(size - margin)
+	print min_x,min_y,max_x,max_y
 	variation = min(16, (max_x - min_x) / 2, (max_y - min_y) / 2)
 	corners = []
 	corners.append(clip(random.randint(min_x, min(max_x, min_x + variation)), random.randint(min_y, min(max_y, min_y + variation))))
 	corners.append(clip(random.randint(max(min_x, max_x - variation), max_x),random.randint(min_y, min(max_y, min_y + variation))))
 	corners.append(clip(random.randint(max(min_x, max_x - variation), max_x),random.randint(max(min_y, max_y - variation), max_y)))
 	corners.append(clip(random.randint(min_x, min(max_x, min_x + variation)),random.randint(max(min_y, max_y - variation), max_y)))
+
+	print corners
+
+	effective_min_x = min(map(lambda c: c[0], corners))
+	effective_min_y = min(map(lambda c: c[1], corners))
+	effective_max_x = max(map(lambda c: c[0], corners))
+	effective_max_y = max(map(lambda c: c[1], corners))
+	delta_min_x = min_x - effective_min_x
+	delta_min_y = min_y - effective_min_y
+	delta_max_x = max_x - effective_max_x
+	delta_max_y = max_y - effective_max_y
+	corners[0] = clip(corners[0][0] + delta_min_x, corners[0][1] + delta_min_y)
+	corners[1] = clip(corners[1][0] + delta_max_x, corners[1][1] + delta_min_y)
+	corners[2] = clip(corners[2][0] + delta_max_x, corners[2][1] + delta_max_y)
+	corners[3] = clip(corners[3][0] + delta_min_x, corners[3][1] + delta_max_y)
+	
+	print corners
 	path = []
 	count = len(corners)
 	for n in range(count):
@@ -529,45 +584,33 @@ def generate_castle_outline(size, offset):
 		dy = abs(py2 - py1)
 		path.append(p1)
 		if dx > dy:
-			mx = random.randint(min(px1, px2), max(px1, px2))
-			path.append(clip(mx, py1))
-			path.append(clip(mx, py2))
+			assert px1 != px2
+			pmin = min(px1, px2) / margin
+			pmax = max(px1, px2) / margin
+			if pmax - pmin > 1:
+				mx = random.randint(pmin + 1, pmax - 1) * margin
+				print '\t',px1,px2,mx
+				path.append(clip(mx, py1))
+				path.append(clip(mx, py2))
 		else:
-			my = random.randint(min(py1, py2), max(py1, py2))
-			path.append(clip(px1, my))
-			path.append(clip(px2, my))
-	grid = create_matrix(size)
-	for n in range(len(path)):
-		p1 = path[n]
-		p2 = path[(n + 1) % len(path)]
-		px1 = p1[0]
-		py1 = p1[1]
-		px2 = p2[0]
-		py2 = p2[1]
-		thickness = 2
-		if px1 == px2:
-			x = px1
-			y1 = min(py1, py2)
-			y2 = max(py1, py2)
-			for y in range(y1, y2 + 1):
-				for tx in range(thickness):
-					for ty in range(thickness):
-						grid[x + tx][y + ty] = True
-		if py1 == py2:
-			y = py1
-			x1 = min(px1, px2)
-			x2 = max(px1, px2)
-			for x in range(x1, x2 + 1):
-				for tx in range(thickness):
-					for ty in range(thickness):
-						grid[x + tx][y + ty] = True
-	return sanitize_path(path)
+			assert py1 != py2
+			pmin = min(py1, py2) / margin
+			pmax = max(py1, py2) / margin
+			if pmax - pmin > 1:
+				my = random.randint(pmin + 1, pmax - 1) * margin
+				print '\t',py1,py2,my
+				path.append(clip(px1, my))
+				path.append(clip(px2, my))
+	print 3,path
+	path = sanitize_path(path)
+	print 4,path
+	return path
 
 	
 map_size = 32 * 3
 
 random.seed(52)
-random.seed(643619)
+random.seed(123456789)
 
 grid_river = generate_river(map_size)
 grid_riverbed = generate_riverbed(map_size, grid_river)
