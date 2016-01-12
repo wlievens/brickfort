@@ -2,16 +2,18 @@ import sys
 import random
 from math import floor, ceil, atan2, pi
 
-DEBUG = False
+DEBUG = True
 
 SCALE = 20
 SCALE_UP = 8
 
+color_black            = 0
 color_blue             = 1
 color_green            = 2
 color_red              = 4
 color_brown            = 6
 color_yellow           = 14
+color_white            = 15
 color_orange           = 25
 color_lime             = 27
 color_trans_light_blue = 43
@@ -191,7 +193,37 @@ def emit_part_list(f, z, color, list):
 def emit_step(f, name):
 	f.write('0 STEP\n')
 
-	
+def fill_merlons_x(f, x1, x2, y, h, color):
+	start = x1 + 1
+	length = x2 - x1
+	parts = length / 3
+	remainder = length - parts * 3
+	if remainder == 1:
+		emit_part(f, color, part_brick_1x1, x2, y, h, 0)
+	if remainder == 2:
+		start = start + 1
+		emit_part(f, color, part_brick_1x1, x1, y, h, 0)
+		emit_part(f, color, part_brick_1x1, x2, y, h, 0)
+	for x in range(parts):
+		emit_part(f, color, part_brick_2x1, start + x * 3, y, h, 0)
+	pass
+
+def fill_merlons_y(f, x, y1, y2, h, color):
+	start = y1 + 1
+	length = y2 - y1
+	parts = length / 3
+	remainder = length - parts * 3
+	if remainder == 1:
+		emit_part(f, color, part_brick_1x1, x, y2, h, 0)
+	if remainder == 2:
+		start = start + 1
+		emit_part(f, color, part_brick_1x1, x, y1, h, 0)
+		emit_part(f, color, part_brick_1x1, x, y2, h, 0)
+	for x in range(parts):
+		emit_part(f, color, part_brick_2x1, x, start + y * 3, h, 1)
+	print 'remainder',remainder
+	pass
+
 def export(file, size, river, riverbed, castle_outline):
 	f = open(file, 'w')
 	export_header(f, file)
@@ -214,10 +246,24 @@ def export(file, size, river, riverbed, castle_outline):
 		emit_part_list(f, n - 1, color_green, list)
 		
 	# Debug corner
-	emit_part(f, color_red, part_corner_2x2, 0, 0, 0, 0)
-	emit_part(f, color_red, part_corner_2x2, 2, 0, 0, 1)
-	emit_part(f, color_red, part_corner_2x2, 4, 0, 0, 2)
-	emit_part(f, color_red, part_corner_2x2, 6, 0, 0, 3)
+	#emit_part(f, color_red, part_corner_2x2, 0, 0, 0, 0)
+	#emit_part(f, color_red, part_corner_2x2, 2, 0, 0, 1)
+	#emit_part(f, color_red, part_corner_2x2, 4, 0, 0, 2)
+	#emit_part(f, color_red, part_corner_2x2, 6, 0, 0, 3)
+	
+	max = 15
+	#for n in range(max - 3):
+	#	emit_part(f, color_black, part_brick_1x1, 4, 3 * n, 3, 0)
+	#	emit_part(f, color_black, part_brick_1x1, max - n, 3 * n, 3, 0)
+	#	emit_part(f, color_red, part_corner_2x2, 2, 3 * n, 6, 0)
+	#	emit_part(f, color_red, part_corner_2x2, max - n + 1, 3 * n, 6, 1)
+	#	fill_merlons_x(f, 4, max - n, 3 * n, 6, color_red)
+	for n in range(max - 3):
+		emit_part(f, color_black, part_brick_1x1, 3 * n, 4, 3, 0)
+		emit_part(f, color_black, part_brick_1x1, 3 * n, max - n, 3, 0)
+		emit_part(f, color_red, part_corner_2x2, 3 * n, 2, 6, 3)
+		emit_part(f, color_red, part_corner_2x2, 3 * n, max - n + 1, 6, 0)
+		#fill_merlons_x(f, 4, 3 * n, max - n, 6, color_red)
 	
 	# Castle outline
 	pi2 = 2 * pi
@@ -258,7 +304,9 @@ def export(file, size, river, riverbed, castle_outline):
 			py1 = p1[1]
 			px2 = p2[0]
 			py2 = p2[1]
-			#emit_part(f, color_red, part_brick_1x1, px1, py1, 6+h3, 1)
+			
+			emit_part(f, color_black, part_brick_1x1, px1, py1, 6+h3, 1)
+			
 			if px1 == px2:
 				x = px1 + 1
 				if py1 < py2:
@@ -312,15 +360,16 @@ def export(file, size, river, riverbed, castle_outline):
 							emit_part(f, color, part_corner_2x2, px1 - 1, py1 - 1, h3, 2)
 						else:
 							emit_part(f, color, part_corner_2x2, px1, py1, h3, 3)
-						for py in range(y1 + 1, y2 - 3, 3):
-							emit_part(f, color_red, part_brick_2x1, px1, py, h3, 1)
+						for py in range(y1 + 1, y2 - 4, 3):
+							emit_part(f, color, part_brick_2x1, px1, py, h3, 1)
+						if concave0:
+							emit_part(f, color, part_brick_1x1, px1, py1 - 2, h3, 1)
 					for py in range(y1 + 3, y2 - 1):
 						for px in range(x, x + plank_width):
 							grid_planks[px][py] = True
 					if not odd and concave0:
 						for px in range(x, x + plank_width):
 							for py in range(y2 - 1, y2 - 1 + plank_width):
-								#emit_part(f, color_red, part_brick_1x1, px, py, height * 3 - 3, 1)
 								grid_planks[px][py] = True
 					if parapet:
 						if odd:
@@ -359,6 +408,10 @@ def export(file, size, river, riverbed, castle_outline):
 							emit_part(f, color, part_corner_2x2, px1, py1, h3, 0)
 						for px in range(x1 + 3, x2 - 2, 3):
 							emit_part(f, color, part_brick_2x1, px, py1, h3, 0)
+						if concave1:
+							emit_part(f, color, part_brick_1x1, x2 - 2, py1, h3, 0)
+						else:
+							emit_part(f, color, part_brick_1x1, x2 - 1, py1, h3, 0)
 					for px in range(x1 + 1, x2 - 3):
 						for py in range(y + 1, y + 1 + plank_width):
 							grid_planks[px][py] = True
@@ -389,12 +442,16 @@ def export(file, size, river, riverbed, castle_outline):
 					x1 = px2 + 2
 					x2 = px1 + 2
 					if merlon:
-						if concave0:
-							emit_part(f, color, part_corner_2x2, px1 - 1, py1 + 1, h3, 1)
+						pass
+						if concave1:
+							for px in range(x1 + 2, x2 - 3, 3):
+								emit_part(f, color_red, part_brick_2x1, px, py1 + 1, h3, 0)
 						else:
-							emit_part(f, color, part_corner_2x2, px1, py1, h3, 2)
-						for px in range(x1 + 1, x2 - 4, 3):
-							emit_part(f, color, part_brick_2x1, px, py1 + 1, h3, 0)
+							pass
+						if concave0:
+							emit_part(f, color_orange, part_corner_2x2, px1 - 1, py1 + 1, h3, 1)
+						else:
+							emit_part(f, color_orange, part_corner_2x2, px1, py1, h3, 2)
 					for px in range(x1 - 1, x2 - 1):
 						for py in range(y + 1 - plank_width, y + 1):
 							grid_planks[px][py] = True
@@ -610,7 +667,7 @@ def generate_castle_outline(size, offset):
 map_size = 32 * 3
 
 random.seed(52)
-random.seed(123456789)
+random.seed(126789)
 
 grid_river = generate_river(map_size)
 grid_riverbed = generate_riverbed(map_size, grid_river)
