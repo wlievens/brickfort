@@ -2,7 +2,7 @@ import sys
 import random
 from math import floor, ceil, atan2, pi
 
-DEBUG = True
+DEBUG = False
 
 SCALE = 20
 SCALE_UP = 8
@@ -192,6 +192,8 @@ def emit_part_list(f, z, color, list):
 		
 def emit_step(f, name):
 	f.write('0 STEP\n')
+	f.write('0 WRITE %s\n' % name)
+
 
 def fill_merlons_x(f, x1, x2, y, h, color):
 	start = x1 + 1
@@ -199,13 +201,17 @@ def fill_merlons_x(f, x1, x2, y, h, color):
 	parts = length / 3
 	remainder = length - parts * 3
 	if remainder == 1:
-		emit_part(f, color, part_brick_1x1, x2, y, h, 0)
+		if parts > 0:
+			emit_part(f, color, part_brick_1x1, x2, y, h, 0)
 	if remainder == 2:
 		start = start + 1
 		emit_part(f, color, part_brick_1x1, x1, y, h, 0)
 		emit_part(f, color, part_brick_1x1, x2, y, h, 0)
 	for x in range(parts):
 		emit_part(f, color, part_brick_2x1, start + x * 3, y, h, 0)
+	if DEBUG:
+		emit_part(f, color_black, part_brick_1x1, x1, y, h+3, 0)
+		emit_part(f, color_black, part_brick_1x1, x2, y, h+3, 0)
 	pass
 
 def fill_merlons_y(f, x, y1, y2, h, color):
@@ -214,14 +220,17 @@ def fill_merlons_y(f, x, y1, y2, h, color):
 	parts = length / 3
 	remainder = length - parts * 3
 	if remainder == 1:
-		emit_part(f, color, part_brick_1x1, x, y2, h, 0)
+		if parts > 0:
+			emit_part(f, color, part_brick_1x1, x, y2, h, 0)
 	if remainder == 2:
 		start = start + 1
 		emit_part(f, color, part_brick_1x1, x, y1, h, 0)
 		emit_part(f, color, part_brick_1x1, x, y2, h, 0)
-	for x in range(parts):
+	for y in range(parts):
 		emit_part(f, color, part_brick_2x1, x, start + y * 3, h, 1)
-	print 'remainder',remainder
+	if DEBUG:
+		emit_part(f, color_black, part_brick_1x1, x, y1, h+3, 0)
+		emit_part(f, color_black, part_brick_1x1, x, y2, h+3, 0)
 	pass
 
 def export(file, size, river, riverbed, castle_outline):
@@ -245,33 +254,25 @@ def export(file, size, river, riverbed, castle_outline):
 		list = lay_bricks(size, grid, parts_plates)
 		emit_part_list(f, n - 1, color_green, list)
 		
-	# Debug corner
-	#emit_part(f, color_red, part_corner_2x2, 0, 0, 0, 0)
-	#emit_part(f, color_red, part_corner_2x2, 2, 0, 0, 1)
-	#emit_part(f, color_red, part_corner_2x2, 4, 0, 0, 2)
-	#emit_part(f, color_red, part_corner_2x2, 6, 0, 0, 3)
-	
-	max = 15
-	#for n in range(max - 3):
-	#	emit_part(f, color_black, part_brick_1x1, 4, 3 * n, 3, 0)
-	#	emit_part(f, color_black, part_brick_1x1, max - n, 3 * n, 3, 0)
-	#	emit_part(f, color_red, part_corner_2x2, 2, 3 * n, 6, 0)
-	#	emit_part(f, color_red, part_corner_2x2, max - n + 1, 3 * n, 6, 1)
-	#	fill_merlons_x(f, 4, max - n, 3 * n, 6, color_red)
-	for n in range(max - 3):
-		emit_part(f, color_black, part_brick_1x1, 3 * n, 4, 3, 0)
-		emit_part(f, color_black, part_brick_1x1, 3 * n, max - n, 3, 0)
-		emit_part(f, color_red, part_corner_2x2, 3 * n, 2, 6, 3)
-		emit_part(f, color_red, part_corner_2x2, 3 * n, max - n + 1, 6, 0)
-		#fill_merlons_x(f, 4, 3 * n, max - n, 6, color_red)
+	# DEBUG constructions
+	if DEBUG:
+		max = 15
+		for n in range(max - 3):
+			emit_part(f, color_black, part_brick_1x1, 4, 20 + 3 * n, 3, 0)
+			emit_part(f, color_black, part_brick_1x1, max - n, 20 + 3 * n, 3, 0)
+			emit_part(f, color_red, part_corner_2x2, 2, 20 + 3 * n, 6, 0)
+			emit_part(f, color_red, part_corner_2x2, max - n + 1, 20 + 3 * n, 6, 1)
+			fill_merlons_x(f, 4, max - n, 20 + 3 * n, 6, color_red)
+		for n in range(max - 3):
+			emit_part(f, color_black, part_brick_1x1, 3 * n, 4, 3, 0)
+			emit_part(f, color_black, part_brick_1x1, 3 * n, max - n, 3, 0)
+			emit_part(f, color_red, part_corner_2x2, 3 * n, 2, 6, 3)
+			emit_part(f, color_red, part_corner_2x2, 3 * n, max - n + 1, 6, 0)
+			fill_merlons_y(f, 3 * n, 4, max - n, 6, color_red)
 	
 	# Castle outline
 	pi2 = 2 * pi
 	count = len(castle_outline)
-	height = 11 # must be odd
-	grid_planks  = create_matrix(size)
-	grid_merlons = create_matrix(size)
-	plank_width = 4
 	concave_angles = []
 	for n in range(count):
 		p1 = castle_outline[(count + n - 1) % count]
@@ -285,28 +286,73 @@ def export(file, size, river, riverbed, castle_outline):
 		py3 = p3[1]
 		angle = (pi2 + atan2(py3 - py2, px3 - px2) - atan2(py2 - py1, px2 - px1)) % pi2
 		concave_angles.append(angle > pi)
-	for h in range(height):
+	
+	wall_height = 8
+	for h in range(wall_height):
 		emit_step(f, 'wall ' + str(n))
 		h3 = h * 3
-		wall    = h <= height - 4
-		parapet = h >= height - 3 and h <= height - 2
-		planks  = h == height - 3
-		merlon  = h == height - 1
-		print h,height,wall,parapet,planks,merlon
 		odd = (h % 2) == 1
 		offset = 2 if odd else 0
 		for n in range(count):
-			concave0 = concave_angles[(n + 0) % count]
-			concave1 = concave_angles[(n + 1) % count]
 			p1 = castle_outline[(n + 0) % count]
 			p2 = castle_outline[(n + 1) % count]
 			px1 = p1[0]
 			py1 = p1[1]
 			px2 = p2[0]
 			py2 = p2[1]
-			
-			emit_part(f, color_black, part_brick_1x1, px1, py1, 6+h3, 1)
-			
+			if px1 == px2:
+				x = px1 + 1
+				if py1 < py2:
+					color = color_light_bley
+					if DEBUG:
+						color = color_yellow
+					y1 = py1
+					y2 = py2
+				else:
+					color = color_light_bley
+					if DEBUG:
+						color = color_red
+					y1 = py2 + 2 - (4 if odd else 0)
+					y2 = py1 + 2 - (4 if odd else 0)
+				for y in range(y1, y2, 4):
+					color = color_light_bley if random.random() > 0.2 else color_dark_bley
+					emit_part(f, color, part_brick_4x2, x - 1, y + offset, h3, 1)
+			if py1 == py2:
+				y = py1
+				if px1 < px2:
+					color = color_light_bley
+					if DEBUG:
+						color = color_lime
+					x1 = px1 + (4 if odd else 0)
+					x2 = px2 + (4 if odd else 0)
+				else:
+					color = color_light_bley
+					if DEBUG:
+						color = color_blue
+					x1 = px2 + 2
+					x2 = px1 + 2
+				for x in range(x1, x2, 4):
+					color = color_light_bley if random.random() > 0.2 else color_dark_bley
+					emit_part(f, color, part_brick_4x2, x - offset, y, h3, 0)
+
+	emit_step(f, 'parapet')
+	parapet_height = 2
+	for n in range(count):
+		concave0 = concave_angles[(n + 0) % count]
+		concave1 = concave_angles[(n + 1) % count]
+		p1 = castle_outline[(n + 0) % count]
+		p2 = castle_outline[(n + 1) % count]
+		px1 = p1[0]
+		py1 = p1[1]
+		px2 = p2[0]
+		py2 = p2[1]
+		# check towers
+		if p1[2] or p2[2]:
+			pass
+		for h in range(parapet_height):
+			h3 = (wall_height + h) * 3
+			odd = (h % 2) == 1
+			offset = 2 if odd else 0
 			if px1 == px2:
 				x = px1 + 1
 				if py1 < py2:
@@ -316,38 +362,23 @@ def export(file, size, river, riverbed, castle_outline):
 					reverse = False
 					y1 = py1
 					y2 = py2
-					if merlon:
+					if odd:
+						if not concave0:
+							emit_part(f, color, part_brick_1x1, x, y1 + 1, h3, 1)
+					else:
 						if concave0:
-							emit_part(f, color, part_corner_2x2, px1 + 1, py1 + 1, h3, 0)
+							emit_part(f, color, part_brick_3x1, x, y1 + 1, h3, 1)
 						else:
-							emit_part(f, color, part_corner_2x2, px1, py1, h3, 1)
-						for py in range(y1 + 3, y2 - 1, 3):
-							emit_part(f, color, part_brick_2x1, px1 + 1, py, h3, 1)
-					for py in range(y1 + 1, y2 + 1):
-						for px in range(x - plank_width, x):
-							grid_planks[px][py] = True
-					if not odd and concave0:
-						for px in range(x - plank_width, x):
-							for py in range(y1 + 1 - plank_width, y1 + 1):
-								grid_planks[px][py] = True
-					if parapet:
-						if odd:
-							if not concave0:
-								emit_part(f, color, part_brick_1x1, x, y1 + 1, h3, 1)
+							emit_part(f, color, part_brick_4x1, x, y1, h3, 1)
+					for y in range(y1 + (2 if odd else 4), y2 - (4 if odd else 2), 4):
+						emit_part(f, color, part_brick_4x1, x, y, h3, 1)
+					if odd:
+						if concave1:
+							emit_part(f, color, part_brick_3x1, x, y2 - 2, h3, 1)
 						else:
-							if concave0:
-								emit_part(f, color, part_brick_3x1, x, y1 + 1, h3, 1)
-							else:
-								emit_part(f, color, part_brick_4x1, x, y1, h3, 1)
-						for y in range(y1 + (2 if odd else 4), y2 - (4 if odd else 2), 4):
-							emit_part(f, color, part_brick_4x1, x, y, h3, 1)
-						if odd:
-							if concave1:
-								emit_part(f, color, part_brick_3x1, x, y2 - 2, h3, 1)
-							else:
-								emit_part(f, color, part_brick_4x1, x, y2 - 2, h3, 1)
-						if not odd and not concave1:
-							emit_part(f, color, part_brick_1x1, x, y2, h3, 0)
+							emit_part(f, color, part_brick_4x1, x, y2 - 2, h3, 1)
+					if not odd and not concave1:
+						emit_part(f, color, part_brick_1x1, x, y2, h3, 0)
 				else:
 					color = color_light_bley
 					if DEBUG:
@@ -355,43 +386,22 @@ def export(file, size, river, riverbed, castle_outline):
 					reverse = True
 					y1 = py2 + 2 - (4 if odd else 0)
 					y2 = py1 + 2 - (4 if odd else 0)
-					if merlon:
+					if odd:
+						emit_part(f, color, part_brick_3x1, x - 1, y1 + 3, h3, 1)
+					else:
+						if not concave1:
+							emit_part(f, color, part_brick_1x1, x - 1, y1 - 1, h3, 0)
+					for y in range(y1 + (6 if odd else 0), y2 - (2 if odd else 6), 4):
+						emit_part(f, color, part_brick_4x1, x - 1, y, h3, 1)
+					if odd:
+						emit_part(f, color, part_brick_4x1, x - 1, y2 - (2 if odd else 4), h3, 1)
+						if not concave0:
+							emit_part(f, color, part_brick_1x1, x - 1, y2 + 2, h3, 0)
+					else:
 						if concave0:
-							emit_part(f, color, part_corner_2x2, px1 - 1, py1 - 1, h3, 2)
+							emit_part(f, color, part_brick_3x1, x - 1, y2 - 4, h3, 1)
 						else:
-							emit_part(f, color, part_corner_2x2, px1, py1, h3, 3)
-						for py in range(y1 + 1, y2 - 4, 3):
-							emit_part(f, color, part_brick_2x1, px1, py, h3, 1)
-						if concave0:
-							emit_part(f, color, part_brick_1x1, px1, py1 - 2, h3, 1)
-					for py in range(y1 + 3, y2 - 1):
-						for px in range(x, x + plank_width):
-							grid_planks[px][py] = True
-					if not odd and concave0:
-						for px in range(x, x + plank_width):
-							for py in range(y2 - 1, y2 - 1 + plank_width):
-								grid_planks[px][py] = True
-					if parapet:
-						if odd:
-							emit_part(f, color, part_brick_3x1, x - 1, y1 + 3, h3, 1)
-						else:
-							if not concave1:
-								emit_part(f, color, part_brick_1x1, x - 1, y1 - 1, h3, 0)
-						for y in range(y1 + (6 if odd else 0), y2 - (2 if odd else 6), 4):
-							emit_part(f, color, part_brick_4x1, x - 1, y, h3, 1)
-						if odd:
 							emit_part(f, color, part_brick_4x1, x - 1, y2 - (2 if odd else 4), h3, 1)
-							if not concave0:
-								emit_part(f, color, part_brick_1x1, x - 1, y2 + 2, h3, 0)
-						else:
-							if concave0:
-								emit_part(f, color, part_brick_3x1, x - 1, y2 - 4, h3, 1)
-							else:
-								emit_part(f, color, part_brick_4x1, x - 1, y2 - (2 if odd else 4), h3, 1)
-				if wall:
-					for y in range(y1, y2, 4):
-						color = color_light_bley if random.random() > 0.2 else color_dark_bley
-						emit_part(f, color, part_brick_4x2, x - 1, y + offset, h3, 1)
 			if py1 == py2:
 				y = py1
 				if px1 < px2:
@@ -401,39 +411,20 @@ def export(file, size, river, riverbed, castle_outline):
 					reverse = False
 					x1 = px1 + (4 if odd else 0)
 					x2 = px2 + (4 if odd else 0)
-					if merlon:
-						if concave0:
-							emit_part(f, color, part_corner_2x2, px1 + 1, py1 - 1, h3, 3)
-						else:
-							emit_part(f, color, part_corner_2x2, px1, py1, h3, 0)
-						for px in range(x1 + 3, x2 - 2, 3):
-							emit_part(f, color, part_brick_2x1, px, py1, h3, 0)
-						if concave1:
-							emit_part(f, color, part_brick_1x1, x2 - 2, py1, h3, 0)
-						else:
-							emit_part(f, color, part_brick_1x1, x2 - 1, py1, h3, 0)
-					for px in range(x1 + 1, x2 - 3):
-						for py in range(y + 1, y + 1 + plank_width):
-							grid_planks[px][py] = True
+					if odd or not concave0:
+						emit_part(f, color, part_brick_4x1, x1 - (2 if odd else 0), y, h3, 0)
 					if not odd and concave0:
-						for px in range(x1 - plank_width + 1, x1 + 1):
-							for py in range(y + 1, y + 1 + plank_width):
-								grid_planks[px][py] = True
-					if parapet:
-						if odd or not concave0:
-							emit_part(f, color, part_brick_4x1, x1 - (2 if odd else 0), y, h3, 0)
-						if not odd and concave0:
-							emit_part(f, color, part_brick_3x1, x1 + 1, y, h3, 0)
-						if odd and not concave0:
-							emit_part(f, color, part_brick_2x1, x1 - 4, y, h3, 0)
-						for x in range(x1 + 4 - (2 if odd else 0), x2 - 7, 4):
-							emit_part(f, color, part_brick_4x1, x, y, h3, 0)
-						if not odd or not concave1:
-							emit_part(f, color, part_brick_4x1, x2 - (6 if odd else 4), y, h3, 0)
-						if odd and concave1:
-							emit_part(f, color, part_brick_3x1, x2 - (6 if odd else 4), y, h3, 0)
-						if not odd and not concave1:
-							emit_part(f, color, part_brick_1x1, x2, y, h3, 0)
+						emit_part(f, color, part_brick_3x1, x1 + 1, y, h3, 0)
+					if odd and not concave0:
+						emit_part(f, color, part_brick_2x1, x1 - 4, y, h3, 0)
+					for x in range(x1 + 4 - (2 if odd else 0), x2 - 7, 4):
+						emit_part(f, color, part_brick_4x1, x, y, h3, 0)
+					if not odd or not concave1:
+						emit_part(f, color, part_brick_4x1, x2 - (6 if odd else 4), y, h3, 0)
+					if odd and concave1:
+						emit_part(f, color, part_brick_3x1, x2 - (6 if odd else 4), y, h3, 0)
+					if not odd and not concave1:
+						emit_part(f, color, part_brick_1x1, x2, y, h3, 0)
 				else:
 					color = color_light_bley
 					if DEBUG:
@@ -441,17 +432,96 @@ def export(file, size, river, riverbed, castle_outline):
 					reverse = True
 					x1 = px2 + 2
 					x2 = px1 + 2
-					if merlon:
-						pass
+					if odd:
 						if concave1:
-							for px in range(x1 + 2, x2 - 3, 3):
-								emit_part(f, color_red, part_brick_2x1, px, py1 + 1, h3, 0)
+							emit_part(f, color, part_brick_3x1, x1 - 1, y + 1, h3, 0)
 						else:
-							pass
+							emit_part(f, color, part_brick_4x1, x1 - 2, y + 1, h3, 0)
+					else:
+						emit_part(f, color, part_brick_4x1, x1, y + 1, h3, 0)
+						if not concave1:
+							emit_part(f, color, part_brick_1x1, x1 - 1, y + 1, h3, 0)
+					for x in range(x1 + (2 if odd else 4), x2 - (2 if odd else 6), 4):
+						emit_part(f, color, part_brick_4x1, x, y + 1, h3, 0)
+					if odd:
+						if not concave0:
+							emit_part(f, color, part_brick_1x1, x2 - 2, y + 1, h3, 0)
+					else:
 						if concave0:
-							emit_part(f, color_orange, part_corner_2x2, px1 - 1, py1 + 1, h3, 1)
+							emit_part(f, color, part_brick_3x1, x2 - 4, y + 1, h3, 0)
 						else:
-							emit_part(f, color_orange, part_corner_2x2, px1, py1, h3, 2)
+							emit_part(f, color, part_brick_4x1, x2 - 4, y + 1, h3, 0)
+
+	emit_step(f, 'towers')
+	tower_height = 16
+	for n in range(count):
+		concave0 = concave_angles[(n - 1 + count) % count]
+		concave1 = concave_angles[(n + 0 + count) % count]
+		concave2 = concave_angles[(n + 1 + count) % count]
+		p0 = castle_outline[(n - 1 + count) % count]
+		p1 = castle_outline[(n + 0 + count) % count]
+		p2 = castle_outline[(n + 1 + count) % count]
+		if p1[2]:
+			px0 = p0[0]
+			py0 = p0[1]
+			px1 = p1[0]
+			py1 = p1[1]
+			px2 = p2[0]
+			py2 = p2[1]
+			print 'tower'
+			for h in range(tower_height):
+				emit_part(f, color, part_brick_1x1, px1, py1, (wall_height + parapet_height + h) * 3, 0)
+
+	emit_step(f, 'walking planks ' + str(n))
+	plank_width = 4
+	grid_planks  = create_matrix(size)
+	for h in range(2):
+		odd = (h % 2) == 1
+		for n in range(count):
+			concave0 = concave_angles[(n + 0) % count]
+			p1 = castle_outline[(n + 0) % count]
+			p2 = castle_outline[(n + 1) % count]
+			px1 = p1[0]
+			py1 = p1[1]
+			px2 = p2[0]
+			py2 = p2[1]
+			if px1 == px2:
+				x = px1 + 1
+				if py1 < py2:
+					y1 = py1
+					y2 = py2
+					for py in range(y1 + 1, y2 + 1):
+						for px in range(x - plank_width, x):
+							grid_planks[px][py] = True
+					if not odd and concave0:
+						for px in range(x - plank_width, x):
+							for py in range(y1 + 1 - plank_width, y1 + 1):
+								grid_planks[px][py] = True
+				else:
+					y1 = py2 + 2 - (4 if odd else 0)
+					y2 = py1 + 2 - (4 if odd else 0)
+					for py in range(y1 + 3, y2 - 1):
+						for px in range(x, x + plank_width):
+							grid_planks[px][py] = True
+					if not odd and concave0:
+						for px in range(x, x + plank_width):
+							for py in range(y2 - 1, y2 - 1 + plank_width):
+								grid_planks[px][py] = True
+			if py1 == py2:
+				y = py1
+				if px1 < px2:
+					x1 = px1 + (4 if odd else 0)
+					x2 = px2 + (4 if odd else 0)
+					for px in range(x1 + 1, x2 - 3):
+						for py in range(y + 1, y + 1 + plank_width):
+							grid_planks[px][py] = True
+					if not odd and concave0:
+						for px in range(x1 - plank_width + 1, x1 + 1):
+							for py in range(y + 1, y + 1 + plank_width):
+								grid_planks[px][py] = True
+				else:
+					x1 = px2 + 2
+					x2 = px1 + 2
 					for px in range(x1 - 1, x2 - 1):
 						for py in range(y + 1 - plank_width, y + 1):
 							grid_planks[px][py] = True
@@ -459,37 +529,68 @@ def export(file, size, river, riverbed, castle_outline):
 						for px in range(x2 - 1, x2 - 1 + plank_width):
 							for py in range(y + 1 - plank_width, y + 1):
 								grid_planks[px][py] = True
-					if parapet:
-						if odd:
-							if concave1:
-								emit_part(f, color, part_brick_3x1, x1 - 1, y + 1, h3, 0)
-							else:
-								emit_part(f, color, part_brick_4x1, x1 - 2, y + 1, h3, 0)
-						else:
-							emit_part(f, color, part_brick_4x1, x1, y + 1, h3, 0)
-							if not concave1:
-								emit_part(f, color, part_brick_1x1, x1 - 1, y + 1, h3, 0)
-						for x in range(x1 + (2 if odd else 4), x2 - (2 if odd else 6), 4):
-							emit_part(f, color, part_brick_4x1, x, y + 1, h3, 0)
-						if odd:
-							if not concave0:
-								emit_part(f, color, part_brick_1x1, x2 - 2, y + 1, h3, 0)
-						else:
-							if concave0:
-								emit_part(f, color, part_brick_3x1, x2 - 4, y + 1, h3, 0)
-							else:
-								emit_part(f, color, part_brick_4x1, x2 - 4, y + 1, h3, 0)
-				if wall:
-					for x in range(x1, x2, 4):
-						color = color_light_bley if random.random() > 0.2 else color_dark_bley
-						emit_part(f, color, part_brick_4x2, x - offset, y, h3, 0)
-		# Walking planks
-		if planks:
-			emit_step(f, 'planks ' + str(n))
-			list = lay_bricks(size, grid_planks, parts_plates)
-			emit_part_list(f, h3, color_brown, list)
+	list = lay_bricks(size, grid_planks, parts_plates)
+	emit_part_list(f, wall_height * 3, color_brown, list)
 	
-	f.write('1 71 850 -272 880 0 0 1 0 1 0 -1 0 0 dude.ldr\n')
+	emit_step(f, 'merlons')
+	h3 = (wall_height + parapet_height) * 3
+	odd = (wall_height + parapet_height) % 2 == 1
+	color = color_light_bley
+	for n in range(count):
+		concave0 = concave_angles[(n + 0) % count]
+		concave1 = concave_angles[(n + 1) % count]
+		p1 = castle_outline[(n + 0) % count]
+		p2 = castle_outline[(n + 1) % count]
+		# skip towers
+		if p1[2] or p2[2]:
+			continue
+		px1 = p1[0]
+		py1 = p1[1]
+		px2 = p2[0]
+		py2 = p2[1]
+		if px1 == px2:
+			x = px1 + 1
+			if py1 < py2:
+				y1 = py1
+				y2 = py2
+				if concave0:
+					emit_part(f, color, part_corner_2x2, px1 + 1, py1 + 1, h3, 0)
+				else:
+					emit_part(f, color, part_corner_2x2, px1, py1, h3, 1)
+				fill_merlons_y(f, px1 + 1, y1 + 2, y2 - (2 if concave1 else 1), h3, color)
+			else:
+				y1 = py2 + 2 - (4 if odd else 0)
+				y2 = py1 + 2 - (4 if odd else 0)
+				if concave0:
+					emit_part(f, color, part_corner_2x2, px1 - 1, py1 - 1, h3, 2)
+				else:
+					emit_part(f, color, part_corner_2x2, px1, py1, h3, 3)
+				fill_merlons_y(f, px1, y1 + (1 if concave1 else 0), y2 - (4 if concave0 else 3), h3, color)
+		if py1 == py2:
+			y = py1
+			if px1 < px2:
+				x1 = px1 + (4 if odd else 0)
+				x2 = px2 + (4 if odd else 0)
+				if concave0:
+					emit_part(f, color, part_corner_2x2, px1 + 1, py1 - 1, h3, 3)
+				else:
+					emit_part(f, color, part_corner_2x2, px1, py1, h3, 0)
+				fill_merlons_x(f, x1 + (3 if concave0 else 2), x2 - (2 if concave1 else 1), py1, h3, color)
+			else:
+				x1 = px2 + 2
+				x2 = px1 + 2
+				fill_merlons_x(f, x1 + (1 if concave1 else 0), x2 - (4 if concave0 else 3), py1 + 1, h3, color)
+				if concave0:
+					emit_part(f, color, part_corner_2x2, px1 - 1, py1 + 1, h3, 1)
+				else:
+					emit_part(f, color, part_corner_2x2, px1, py1, h3, 2)
+
+	emit_step(f, 'minifigures')
+	f.write('1 71 %s -272 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (42 * SCALE + SCALE / 2, 30 * SCALE))
+	f.write('1 71 %s -272 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (42 * SCALE + SCALE / 2, 35 * SCALE))
+	f.write('1 71 %s -272 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (42 * SCALE + SCALE / 2, 40 * SCALE))
+	f.write('1 71 %s -272 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (42 * SCALE + SCALE / 2, 45 * SCALE))
+	f.write('1 71 %s -272 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (42 * SCALE + SCALE / 2, 50 * SCALE))
 
 	f.write('0\n')
 
@@ -497,7 +598,7 @@ def export(file, size, river, riverbed, castle_outline):
 def generate_river_path(size):
 	path = []
 	margin = 8
-	start_x = random.randint(ceil(size * 0.1), floor(size * 0.3))
+	start_x = random.randint(margin, 16)
 	x = start_x
 	deviation = 1
 	for y in range(size):
@@ -559,15 +660,6 @@ def find_castle_offset(size, river, riverbed):
 	return max_x
 
 	
-def generate_castle_floor(size, offset):
-	grid = create_matrix(size)
-	margin = 4
-	for x in range(offset + margin, size - margin):
-		for y in range(margin, size - margin):
-			grid[x][y] = True
-	return grid
-
-	
 def unique_keep_order(seq):
 	seen = set()
 	seen_add = seen.add
@@ -576,7 +668,6 @@ def unique_keep_order(seq):
 
 def sanitize_path(path):
 	path = unique_keep_order(path)
-	print 5,path
 	updated = True
 	while updated:
 		updated = False
@@ -597,22 +688,21 @@ def generate_castle_outline(size, offset):
 		return x - x % 8
 	def clip_y(y):
 		return y - y % 8
-	def clip(x, y):
-		return (clip_x(x), clip_y(y))
+	def clip(p):
+		return (clip_x(p[0]), clip_y(p[1]), p[2])
+	def shift(p, x, y):
+		return clip((p[0] + x, p[1] + y, p[2]))
 	margin = 8
 	min_x = clip_x(offset + margin - 1)
 	min_y = clip_y(margin)
 	max_x = clip_x(size - margin)
 	max_y = clip_x(size - margin)
-	print min_x,min_y,max_x,max_y
 	variation = min(16, (max_x - min_x) / 2, (max_y - min_y) / 2)
 	corners = []
-	corners.append(clip(random.randint(min_x, min(max_x, min_x + variation)), random.randint(min_y, min(max_y, min_y + variation))))
-	corners.append(clip(random.randint(max(min_x, max_x - variation), max_x),random.randint(min_y, min(max_y, min_y + variation))))
-	corners.append(clip(random.randint(max(min_x, max_x - variation), max_x),random.randint(max(min_y, max_y - variation), max_y)))
-	corners.append(clip(random.randint(min_x, min(max_x, min_x + variation)),random.randint(max(min_y, max_y - variation), max_y)))
-
-	print corners
+	corners.append(clip((random.randint(min_x, min(max_x, min_x + variation)), random.randint(min_y, min(max_y, min_y + variation)), True)))
+	corners.append(clip((random.randint(max(min_x, max_x - variation), max_x), random.randint(min_y, min(max_y, min_y + variation)), True)))
+	corners.append(clip((random.randint(max(min_x, max_x - variation), max_x), random.randint(max(min_y, max_y - variation), max_y), True)))
+	corners.append(clip((random.randint(min_x, min(max_x, min_x + variation)), random.randint(max(min_y, max_y - variation), max_y), True)))
 
 	effective_min_x = min(map(lambda c: c[0], corners))
 	effective_min_y = min(map(lambda c: c[1], corners))
@@ -622,12 +712,11 @@ def generate_castle_outline(size, offset):
 	delta_min_y = min_y - effective_min_y
 	delta_max_x = max_x - effective_max_x
 	delta_max_y = max_y - effective_max_y
-	corners[0] = clip(corners[0][0] + delta_min_x, corners[0][1] + delta_min_y)
-	corners[1] = clip(corners[1][0] + delta_max_x, corners[1][1] + delta_min_y)
-	corners[2] = clip(corners[2][0] + delta_max_x, corners[2][1] + delta_max_y)
-	corners[3] = clip(corners[3][0] + delta_min_x, corners[3][1] + delta_max_y)
+	corners[0] = shift(corners[0], delta_min_x, delta_min_y)
+	corners[1] = shift(corners[1], delta_max_x, delta_min_y)
+	corners[2] = shift(corners[2], delta_max_x, delta_max_y)
+	corners[3] = shift(corners[3], delta_min_x, delta_max_y)
 	
-	print corners
 	path = []
 	count = len(corners)
 	for n in range(count):
@@ -646,37 +735,30 @@ def generate_castle_outline(size, offset):
 			pmax = max(px1, px2) / margin
 			if pmax - pmin > 1:
 				mx = random.randint(pmin + 1, pmax - 1) * margin
-				print '\t',px1,px2,mx
-				path.append(clip(mx, py1))
-				path.append(clip(mx, py2))
+				path.append(clip((mx, py1, False)))
+				path.append(clip((mx, py2, False)))
 		else:
 			assert py1 != py2
 			pmin = min(py1, py2) / margin
 			pmax = max(py1, py2) / margin
 			if pmax - pmin > 1:
 				my = random.randint(pmin + 1, pmax - 1) * margin
-				print '\t',py1,py2,my
-				path.append(clip(px1, my))
-				path.append(clip(px2, my))
-	print 3,path
+				path.append(clip((px1, my, False)))
+				path.append(clip((px2, my, False)))
 	path = sanitize_path(path)
-	print 4,path
 	return path
 
 	
 map_size = 32 * 3
 
-random.seed(52)
-random.seed(126789)
+random.seed(548313)
 
 grid_river = generate_river(map_size)
 grid_riverbed = generate_riverbed(map_size, grid_river)
 
-castle_offset = find_castle_offset(map_size, grid_river, grid_riverbed)
-
-castle_outline = generate_castle_outline(map_size, castle_offset)
-#print_matrix(map_size, castle_outline)
-
-#castle_floor = generate_castle_floor(map_size, castle_offset)
+#castle_offset = find_castle_offset(map_size, grid_river, grid_riverbed)
+#castle_outline = generate_castle_outline(map_size, castle_offset)
+#castle_outline = [(32, 8, True), (40, 8, False), (88, 8, False), (88, 64, False), (32, 64, False), (32, 16, False)]
+castle_outline = []
 
 export('castle.ldr', map_size, grid_river, grid_riverbed, castle_outline)
