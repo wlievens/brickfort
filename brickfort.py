@@ -48,6 +48,7 @@ part_tile_1x2          = '3069b'
 part_tile_2x2          = '3068b'
 part_tile_2x4          = '87079'
 part_tile_1x6          = '6636'
+part_tile_1x8          = '4162'
 
 part_corner_2x2        = '2357'
 
@@ -55,6 +56,7 @@ part_arch_1x3          = '4490'
 part_arch_1x4          = '3659'
 part_arch_1x6          = '3455'
 part_arch_1x8x2        = '3308'
+part_arch_1x3x2        = '88292'
 
 part_portcullis        = '89513'
 
@@ -87,6 +89,7 @@ part_sizes[part_tile_1x2]          = (  1,  2,  1 )
 part_sizes[part_tile_2x2]          = (  2,  2,  1 )
 part_sizes[part_tile_2x4]          = (  2,  4,  1 )
 part_sizes[part_tile_1x6]          = (  1,  6,  1 )
+part_sizes[part_tile_1x8]          = (  1,  8,  1 )
 
 part_sizes[part_corner_2x2]        = (  2,  2,  3 )
 
@@ -94,23 +97,28 @@ part_sizes[part_arch_1x3]          = (  1,  3,  3 )
 part_sizes[part_arch_1x4]          = (  1,  4,  3 )
 part_sizes[part_arch_1x6]          = (  1,  6,  3 )
 part_sizes[part_arch_1x8x2]        = (  1,  8,  6 )
+part_sizes[part_arch_1x3x2]        = (  1,  3,  6 )
 
 part_sizes[part_portcullis]        = (  1,  9, 31 )
 
 
 part_offsets = {}
 
-part_offsets[part_brick_2x3]       = [(  10, -10,  0 ), ( -10,  10,  0 ), ( 0, 0, 0 ), ( 0, 0, 0 )]
-part_offsets[part_tile_1x2]        = [(  10, -10,  0 ), ( -10,  10,  0 ), ( 0, 0, 0 ), ( 0, 0, 0 )]
-part_offsets[part_tile_2x4]        = [(  20, -20,  0 ), ( -20,  20,  0 ), ( 0, 0, 0 ), ( 0, 0, 0 )]
-part_offsets[part_tile_1x6]        = [(  50, -50,  0 ), ( -50,  50,  0 ), ( 0, 0, 0 ), ( 0, 0, 0 )]
-part_offsets[part_corner_2x2]      = [( -10, -10,  0 ), (  10, -10,  0 ), ( 10, 10, 0 ), ( -10, 10, 0 )]
-part_offsets[part_arch_1x3]        = [(  20, -20,  0 ), ( -20,  20,  0 ), ( 0, 0, 0 ), ( 0, 0, 0 )]
-part_offsets[part_arch_1x4]        = [(  30, -30,  0 ), ( -30,  30,  0 ), ( 0, 0, 0 ), ( 0, 0, 0 )]
-part_offsets[part_arch_1x6]        = [(  50, -50,  0 ), ( -50,  50,  0 ), ( 0, 0, 0 ), ( 0, 0, 0 )]
-part_offsets[part_arch_1x8x2]      = [(  70, -70,  0 ), ( -70,  70,  0 ), ( 0, 0, 0 ), ( 0, 0, 0 )]
-part_offsets[part_portcullis]      = [(  80, -80, 28 ), ( -80,  80, 28 ), ( 0, 0, 0 ), ( 0, 0, 0 )]
+part_offsets[part_brick_2x3]       = [(  10, -10,  0 ), ( -10,  10,  0 ), (  0,   0, 0 ), (   0,  0, 0 )]
+part_offsets[part_tile_1x2]        = [(  10, -10,  0 ), ( -10,  10,  0 ), (  0,   0, 0 ), (   0,  0, 0 )]
+part_offsets[part_tile_2x4]        = [(  20, -20,  0 ), ( -20,  20,  0 ), (  0,   0, 0 ), (   0,  0, 0 )]
+part_offsets[part_tile_1x6]        = [(  50, -50,  0 ), ( -50,  50,  0 ), (  0,   0, 0 ), (   0,  0, 0 )]
+part_offsets[part_tile_1x8]        = [(  70, -70,  0 ), ( -70,  70,  0 ), (  0,   0, 0 ), (   0,  0, 0 )]
+part_offsets[part_corner_2x2]      = [( -10, -10,  0 ), (  10, -10,  0 ), ( 10,  10, 0 ), ( -10, 10, 0 )]
+part_offsets[part_arch_1x3]        = [(  20, -20,  0 ), ( -20,  20,  0 ), (  0,   0, 0 ), (   0,  0, 0 )]
+part_offsets[part_arch_1x4]        = [(  30, -30,  0 ), ( -30,  30,  0 ), (  0,   0, 0 ), (   0,  0, 0 )]
+part_offsets[part_arch_1x6]        = [(  50, -50,  0 ), ( -50,  50,  0 ), (  0,   0, 0 ), (   0,  0, 0 )]
+part_offsets[part_arch_1x8x2]      = [(  70, -70,  0 ), ( -70,  70,  0 ), (  0,   0, 0 ), (   0,  0, 0 )]
+part_offsets[part_arch_1x3x2]      = [(   0, -20,  0 ), ( -20,   0,  0 ), (  0, -20, 0 ), ( -20,  0, 0 )]
+part_offsets[part_portcullis]      = [(  80, -80, 28 ), ( -80,  80, 28 ), (  0,   0, 0 ), (   0,  0, 0 )]
 
+part_rotations = {}
+part_rotations[part_arch_1x3x2]    = [3, 0, 1, 2]
 
 rotate_table_xy = [None for n in range(4)]
 rotate_table_xy[0] = [1,0,0,0,1,0,0,0,1]
@@ -124,10 +132,27 @@ parts_bricks = [part_brick_4x2, part_brick_4x1, part_brick_3x1, part_brick_2x1, 
 class Cell:
 	WALL       = 1
 	WINDOW     = 2
-	PORTCULLIS = 3
+	DOOR       = 3
+	PORTCULLIS = 4
 
 def create_matrix(size):
 	return [[False for x in range(size)] for x in range(size)] 
+
+def copy_matrix(size, matrix):
+	result = create_matrix(size)
+	for y in range(size):
+		for x in range(size):
+			result[x][y] = matrix[x][y]
+	return result
+
+def combine_matrix(size, a, b):
+	result = create_matrix(size)
+	for y in range(size):
+		for x in range(size):
+			va = a[x][y]
+			vb = b[x][y]
+			result[x][y] = max(va, vb)
+	return result
 
 def points_to_matrix(size, points):
 	matrix = create_matrix(size)
@@ -171,6 +196,8 @@ def emit_part(f, color, part, x, y, z, rxy = 0):
 		x = x + offsets[rxy][0]
 		y = y + offsets[rxy][1]
 		z = z + offsets[rxy][2]
+	if part in part_rotations:
+		rxy = part_rotations[part][rxy]
 	rxy = rotate_table_xy[rxy]
 	f.write('1 %s %s %s %s %s %s %s %s %s %s %s %s %s %s.dat\n' % (color, x, z, y, rxy[0], rxy[1], rxy[2], rxy[3], rxy[4], rxy[5], rxy[6], rxy[7], rxy[8], part))
 
@@ -358,6 +385,13 @@ def export(file, size, river, riverbed, castle_outline, matrixes):
 	def check_bottom_corner(matrix, prev, x, y):
 		filter = matrix[x][y]
 		return matrix[x - 1][y] != filter and matrix[x][y - 1] != filter and (prev is None or prev[x][y] != filter)
+		
+	#emit_part(f, color_lime, part_arch_1x3x2, 0, 0, 0, 0)
+	#emit_part(f, color_lime, part_arch_1x3x2, 0, 1, 0, 1)
+	#emit_part(f, color_lime, part_arch_1x3x2, 0, 4, 0, 2)
+	#emit_part(f, color_lime, part_arch_1x3x2, 0, 7, 0, 3)
+	#emit_part(f, color_lime, part_tile_1x8, 0, 0, 0, 0)
+	#emit_part(f, color_lime, part_tile_1x8, 0, 1, 0, 1)
 	
 	matrix_wall_list = []
 	for matrix in matrixes:
@@ -376,7 +410,7 @@ def export(file, size, river, riverbed, castle_outline, matrixes):
 				if cell == Cell.WALL:
 					matrix_wall[x][y] = True
 				
-				if cell == Cell.WINDOW:
+				if cell == Cell.WINDOW or cell == Cell.DOOR:
 					# Detect first corner cell at bottom layer
 					if check_bottom_corner(matrix, prev, x, y):
 						(width, height, layers) = scan_cells_up(x, y, layer)
@@ -386,15 +420,21 @@ def export(file, size, river, riverbed, castle_outline, matrixes):
 						max_size = max(width, height)
 						base = layer
 						top = layer + layers - 1
-						if max_size == 3 and min_size == 2:
-							emit_part(f, color, part_tile_1x2, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, 1 - rotated)
-						if max_size == 4 and min_size == 2:
-							emit_part(f, color, part_tile_2x2, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
-						if max_size == 6 and min_size == 2:
-							emit_part(f, color, part_tile_2x4, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
-						if max_size == 8 and min_size == 2:
-							emit_part(f, color, part_tile_1x6, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
-							emit_part(f, color, part_tile_1x6, x + 1, y + 1, base * 3, rotated)
+						if cell == Cell.WINDOW:
+							if max_size == 3 and min_size == 2:
+								emit_part(f, color, part_tile_1x2, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, 1 - rotated)
+							if max_size == 4 and min_size == 2:
+								emit_part(f, color, part_tile_2x2, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
+							if max_size == 6 and min_size == 2:
+								emit_part(f, color, part_tile_2x4, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
+							if max_size == 8 and min_size == 2:
+								emit_part(f, color, part_tile_1x6, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
+								emit_part(f, color, part_tile_1x6, x + 1, y + 1, base * 3, rotated)
+							if max_size == 10 and min_size == 2:
+								emit_part(f, color, part_tile_1x8, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
+								emit_part(f, color, part_tile_1x8, x + 1, y + 1, base * 3, rotated)
+						if max_size == 10 and min_size == 2:
+							emit_part(f, color, part_plate_4x2, x + (0 if orientation else 3), y + (3 if orientation else 0), top * 3 - 1, rotated + 2)
 						for d in range(min_size):
 							sx = x + (d if orientation else 0)
 							sy = y + (0 if orientation else d)
@@ -403,7 +443,12 @@ def export(file, size, river, riverbed, castle_outline, matrixes):
 							for z in range(base, top - (1 if max_size < 8 else 2)):
 								matrix_wall_list[z][sx][sy] = True
 								matrix_wall_list[z][fx][fy] = True
-							if max_size == 8:
+							if max_size >= 8:
+								emit_part(f, color, part_arch_1x3x2, sx, sy, (top - 2) * 3, rotated)
+								emit_part(f, color, part_arch_1x3x2, fx, fy, (top - 2) * 3, rotated + 2)
+								matrix_wall_list[top - 1][sx][sy] = True
+								matrix_wall_list[top - 1][fx][fy] = True
+							elif max_size == 8:
 								emit_part(f, color, part_arch_1x8x2, sx, sy, (top - 2) * 3, rotated)
 							elif max_size == 6:
 								emit_part(f, color, part_arch_1x6, sx, sy, (top - 1) * 3, rotated)
@@ -837,11 +882,11 @@ def export(file, size, river, riverbed, castle_outline, matrixes):
 					emit_part(f, color, part_corner_2x2, px1, py1, h3, 2)
 
 	emit_step(f, 'minifigures')
-	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (42 * SCALE + SCALE / 2, 28 * SCALE))
-	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (42 * SCALE + SCALE / 2, 33 * SCALE))
-	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (42 * SCALE + SCALE / 2, 40 * SCALE))
-	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (42 * SCALE + SCALE / 2, 45 * SCALE))
-	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (42 * SCALE + SCALE / 2, 50 * SCALE))
+	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (40 * SCALE + SCALE / 2, 30 * SCALE))
+	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (40 * SCALE + SCALE / 2, 35 * SCALE))
+	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (40 * SCALE + SCALE / 2, 40 * SCALE))
+	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (40 * SCALE + SCALE / 2, 45 * SCALE))
+	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (40 * SCALE + SCALE / 2, 50 * SCALE))
 
 	f.write('0\n')
 
@@ -1000,17 +1045,12 @@ def generate_castle_outline(size, offset):
 	return path
 
 	
-map_size = 32 * 2
+map_size = 32 * 3
 
-random.seed(548313)
+random.seed(1)
 
 grid_river = generate_river(map_size)
 grid_riverbed = generate_riverbed(map_size, grid_river)
-
-#castle_offset = find_castle_offset(map_size, grid_river, grid_riverbed)
-#castle_outline = generate_castle_outline(map_size, castle_offset)
-#castle_outline = [(32, 8, True), (40, 8, False), (88, 8, False), (88, 64, False), (32, 64, False), (32, 16, False)]
-castle_outline = []
 
 def template_to_matrix(data):
 	matrix = create_matrix(map_size)
@@ -1371,4 +1411,175 @@ for n in range(2):
 for n in range(1):
 	matrixes.append(template_to_matrix(data5))
 
-export('castle.ldr', map_size, grid_river, grid_riverbed, castle_outline, matrixes)
+def draw_tower(matrix, x, y, r):
+	for n in range(0, r):
+		matrix[x + n][y] = Cell.WALL
+		matrix[x + n][y + 1] = Cell.WALL
+		matrix[x][y + n] = Cell.WALL
+		matrix[x + 1][y + n] = Cell.WALL
+		matrix[x + r - 2][y + n] = Cell.WALL
+		matrix[x + r - 1][y + n] = Cell.WALL
+		matrix[x + n][y + r - 2] = Cell.WALL
+		matrix[x + n][y + r - 1] = Cell.WALL
+
+def draw_tower_window(matrix, x, y, r):
+	for n in range(0, r):
+		cell = Cell.WALL
+		if n >= 2 and n < r - 2:
+			if r == 14:
+				cell = Cell.WINDOW if n <= 5 or n >= 8 else Cell.WALL
+			else:
+				cell = Cell.WINDOW
+		matrix[x + n][y] = cell
+		matrix[x + n][y + 1] = cell
+		matrix[x][y + n] = cell
+		matrix[x + 1][y + n] = cell
+		matrix[x + r - 2][y + n] = cell
+		matrix[x + r - 1][y + n] = cell
+		matrix[x + n][y + r - 2] = cell
+		matrix[x + n][y + r - 1] = cell
+
+def draw_tower_outline(matrix, x, y, r):
+	for n in range(0, r):
+		matrix[x + n][y] = Cell.WALL
+		#matrix[x + n][y + 1] = Cell.WALL
+		matrix[x][y + n] = Cell.WALL
+		#matrix[x + 1][y + n] = Cell.WALL
+		#matrix[x + r - 2][y + n] = Cell.WALL
+		matrix[x + r - 1][y + n] = Cell.WALL
+		#matrix[x + n][y + r - 2] = Cell.WALL
+		matrix[x + n][y + r - 1] = Cell.WALL
+
+def draw_cell(matrix, x1, y1, x2, y2, cell):
+	for x in range(min(x1, x2), max(x1, x2) + 1):
+		for y in range(min(y1, y2), max(y1, y2) + 1):
+			matrix[x][y] = cell
+
+def draw_wall(matrix, x1, y1, x2, y2):
+	draw_cell(matrix, x1, y1, x2, y2, Cell.WALL)
+
+def mod2(n):
+	return n - n % 2
+
+offset = find_castle_offset(map_size, grid_river, grid_riverbed)
+
+margin = 2
+min_x = offset
+min_y = margin
+max_x = map_size - margin
+max_y = map_size - margin
+
+spread = 8
+min_tower_size = 14
+max_tower_size = 14
+
+min_x_a = mod2(min_x)
+max_x_a = mod2(min_x + spread)
+min_y_a = mod2(min_y)
+max_y_a = mod2(min_y + spread)
+
+min_x_b = mod2(max_x - max_tower_size - spread)
+max_x_b = mod2(max_x - max_tower_size)
+min_y_b = mod2(max_y - max_tower_size - spread)
+max_y_b = mod2(max_y - max_tower_size)
+
+x1 = mod2(random.randint(min_x_a, max_x_a))
+y1 = mod2(random.randint(min_y_a, max_y_a))
+x2 = mod2(random.randint(min_x_b, max_x_b))
+y2 = mod2(random.randint(min_y_a, max_y_a))
+x3 = mod2(random.randint(min_x_b, max_x_b))
+y3 = mod2(random.randint(min_y_b, max_y_b))
+x4 = mod2(random.randint(min_x_a, max_x_a))
+y4 = mod2(random.randint(min_y_b, max_y_b))
+
+s1 = mod2(random.randint(min_tower_size, max_tower_size))
+s2 = mod2(random.randint(min_tower_size, max_tower_size))
+s3 = mod2(random.randint(min_tower_size, max_tower_size))
+s4 = mod2(random.randint(min_tower_size, max_tower_size))
+
+matrixes = []
+
+matrix_ground = create_matrix(map_size)
+
+wall_thickness = 5
+
+draw_tower(matrix_ground, x1, y1, s1)
+draw_tower(matrix_ground, x2, y2, s2)
+draw_tower(matrix_ground, x3, y3, s3)
+draw_tower(matrix_ground, x4, y4, s4)
+
+yw1 = mod2((min(y1 + s1, y2 + s2) + max(y1, y2)) / 2)
+xw2 = mod2((min(x2 + s2, x3 + s3) + max(x2, x3)) / 2)
+yw3 = mod2((min(y3 + s3, y4 + s4) + max(y3, y4)) / 2)
+xw4 = mod2((min(x4 + s4, x1 + s1) + max(x4, x1)) / 2)
+
+draw_wall(matrix_ground, x1 + s1, yw1, x2, yw1 + wall_thickness - 1)
+draw_wall(matrix_ground, xw2, y2 + s2, xw2 + wall_thickness - 1, y3)
+draw_wall(matrix_ground, x3, yw3, x4 + s4 - 2, yw3 + wall_thickness - 1)
+
+ym1 = (y4 - y1) / 2 + 5
+ym2 = (y4 - y1) / 2 - 5
+draw_wall(matrix_ground, xw4, y4, xw4 + wall_thickness - 1, ym1)
+draw_wall(matrix_ground, xw4, ym2, xw4 + wall_thickness - 1, y1 + s1 - 2)
+draw_cell(matrix_ground, xw4, ym2 + 1, xw4, ym1 - 1, Cell.PORTCULLIS)
+
+matrix_wall = copy_matrix(map_size, matrix_ground)
+draw_wall(matrix_wall, xw4, y4, xw4 + wall_thickness - 1, y1 + s1 - 2)
+
+matrix_wall_parapet = create_matrix(map_size)
+draw_wall(matrix_wall_parapet, x1 + s1, yw1, x2 - 1, yw1)
+draw_wall(matrix_wall_parapet, xw2 + wall_thickness - 1, y2 + s2, xw2 + wall_thickness - 1, y3 - 1)
+draw_wall(matrix_wall_parapet, x3 - 1, yw3 + wall_thickness - 1, x4 + s4, yw3 + wall_thickness - 1)
+draw_wall(matrix_wall_parapet, xw4, y4 - 1, xw4, y1 + s1)
+
+matrix_wall_tower = create_matrix(map_size)
+draw_tower(matrix_wall_tower, x1, y1, s1)
+draw_tower(matrix_wall_tower, x2, y2, s2)
+draw_tower(matrix_wall_tower, x3, y3, s3)
+draw_tower(matrix_wall_tower, x4, y4, s4)
+
+matrix_wall_tower_door = copy_matrix(map_size, matrix_wall_tower)
+for n in range(wall_thickness):
+	draw_cell(matrix_wall_tower_door, x1 + s1 - 2, yw1, x1 + s1 - 1, yw1 + wall_thickness, Cell.DOOR)
+	draw_cell(matrix_wall_tower_door, xw4, y1 + s1 - 2, xw4 + wall_thickness, y1 + s1 - 1, Cell.DOOR)
+	draw_cell(matrix_wall_tower_door, x2, yw1, x2 + 1, yw1 + wall_thickness, Cell.DOOR)
+	draw_cell(matrix_wall_tower_door, xw2 - 1, y2 + s2 - 2, xw2 + wall_thickness - 1, y2 + s2 - 1, Cell.DOOR)
+	draw_cell(matrix_wall_tower_door, xw2 - 1, y3, xw2 + wall_thickness - 1, y3 + 1, Cell.DOOR)
+	draw_cell(matrix_wall_tower_door, x3, yw3 - 1, x3 + 1, yw3 + wall_thickness - 1, Cell.DOOR)
+	draw_cell(matrix_wall_tower_door, x4 + s4 - 2, yw3 - 1, x4 + s4 - 1, yw3 + wall_thickness - 1, Cell.DOOR)
+	draw_cell(matrix_wall_tower_door, xw4, y4, xw4 + wall_thickness, y4 + 1, Cell.DOOR)
+
+matrix_wall_tower_window = create_matrix(map_size)
+draw_tower_window(matrix_wall_tower_window, x1, y1, s1)
+draw_tower_window(matrix_wall_tower_window, x2, y2, s2)
+draw_tower_window(matrix_wall_tower_window, x3, y3, s3)
+draw_tower_window(matrix_wall_tower_window, x4, y4, s4)
+
+matrix_wall_tower_parapet = create_matrix(map_size)
+draw_tower_outline(matrix_wall_tower_parapet, x1, y1, s1)
+draw_tower_outline(matrix_wall_tower_parapet, x2, y2, s2)
+draw_tower_outline(matrix_wall_tower_parapet, x3, y3, s3)
+draw_tower_outline(matrix_wall_tower_parapet, x4, y4, s4)
+
+for n in range(11):
+	matrixes.append(matrix_ground)
+for n in range(1):
+	matrixes.append(matrix_wall)
+for n in range(2):
+	matrixes.append(combine_matrix(map_size, matrix_wall_parapet, matrix_wall_tower_door))
+for n in range(3):
+	matrixes.append(matrix_wall_tower_door)
+for n in range(2):
+	matrixes.append(matrix_wall_tower)
+for n in range(3):
+	matrixes.append(matrix_wall_tower_window)
+for n in range(2):
+	matrixes.append(matrix_wall_tower)
+for n in range(3):
+	matrixes.append(matrix_wall_tower_window)
+for n in range(1):
+	matrixes.append(matrix_wall_tower)
+for n in range(2):
+	matrixes.append(matrix_wall_tower_parapet)
+
+export('castle.ldr', map_size, grid_river, grid_riverbed, [], matrixes)
