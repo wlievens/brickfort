@@ -411,7 +411,6 @@ def export(file, size, river, riverbed, castle_outline, matrixes):
 					matrix_wall[x][y] = True
 				
 				if cell == Cell.WINDOW or cell == Cell.DOOR:
-					# Detect first corner cell at bottom layer
 					if check_bottom_corner(matrix, prev, x, y):
 						(width, height, layers) = scan_cells_up(x, y, layer)
 						orientation = width < height
@@ -897,12 +896,12 @@ def export(file, size, river, riverbed, castle_outline, matrixes):
 					emit_part(f, color, part_corner_2x2, px1, py1, h3, 2)
 
 	emit_step(f, 'minifigures')
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 30 * SCALE))
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 35 * SCALE))
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 40 * SCALE))
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 45 * SCALE))
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 50 * SCALE))
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 69 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 30 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 35 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 40 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 45 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 50 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 69 * SCALE))
 
 	f.write('0\n')
 
@@ -1438,20 +1437,22 @@ def draw_tower(matrix, x, y, r):
 		matrix[x + n][y + r - 2] = Cell.WALL
 		matrix[x + n][y + r - 1] = Cell.WALL
 
+WINDOW_PATTERNS = ["__1111__1111__1111__",
+                   "__1111_1111_1111__",
+				   "___1111__1111___",
+				   "__1111__1111__",
+				   "___111111___",
+				   "__111111__",
+				   "__1111__"
+				  ]
+
 def draw_tower_window(matrix, x, y, r):
 	for n in range(0, r):
 		cell = Cell.WALL
-		if n >= 2 and n < r - 2:
-			if r == 20:
-				cell = "11110111101111"[n - 2] == "1"
-			elif r == 18:
-				cell = Cell.WINDOW if n <= 7 or n >= 10 else Cell.WALL
-			elif r == 16:
-				cell = Cell.WINDOW if n <= 5 or n >= 10 else Cell.WALL
-			elif r == 14:
-				cell = Cell.WINDOW if n <= 5 or n >= 8 else Cell.WALL
-			else:
-				cell = Cell.WINDOW
+		for pattern in WINDOW_PATTERNS:
+			if len(pattern) == r:
+				cell = Cell.WINDOW if pattern[n] == "1" else Cell.WALL
+				break
 		matrix[x + n][y] = cell
 		matrix[x + n][y + 1] = cell
 		matrix[x][y + n] = cell
@@ -1460,6 +1461,7 @@ def draw_tower_window(matrix, x, y, r):
 		matrix[x + r - 1][y + n] = cell
 		matrix[x + n][y + r - 2] = cell
 		matrix[x + n][y + r - 1] = cell
+		matrix[x + r - 1][y + n] = cell
 
 def draw_tower_outline(matrix, x, y, r):
 	for n in range(0, r):
@@ -1509,6 +1511,53 @@ def draw_cell(matrix, x1, y1, x2, y2, cell):
 
 def draw_wall(matrix, x1, y1, x2, y2):
 	draw_cell(matrix, x1, y1, x2, y2, Cell.WALL)
+
+def draw_wall_merlon(matrix, source):
+	size = len(matrix)
+	for x in range(size):
+		segments = []
+		start = None
+		end = None
+		open = False
+		for y in range(size):
+			if source[x][y]:
+				end = y
+				if not open:
+					open = True
+					start = y
+			elif open:
+				if end > start:
+					segments.append((start, end))
+				open = False
+		if open and end > start:
+			segments.append((start, end))
+		if len(segments) > 0:
+			for segment in segments:
+				for y in range(segment[0], segment[1] + 1, 3):
+					matrix[x][y] = True
+					matrix[x][y + 1] = True
+	for y in range(size):
+		segments = []
+		start = None
+		end = None
+		open = False
+		for x in range(size):
+			if source[x][y]:
+				end = x
+				if not open:
+					open = True
+					start = x
+			elif open:
+				if end > start:
+					segments.append((start, end))
+				open = False
+		if open and end > start:
+			segments.append((start, end))
+		if len(segments) > 0:
+			for segment in segments:
+				for x in range(segment[0], segment[1] + 1, 3):
+					matrix[x][y] = True
+					matrix[x + 1][y] = True
 
 def mod2(n):
 	return n - n % 2
@@ -1584,6 +1633,9 @@ draw_wall(matrix_wall_parapet, xw2 + wall_thickness - 1, y2 + s2, xw2 + wall_thi
 draw_wall(matrix_wall_parapet, x3 - 1, yw3 + wall_thickness - 1, x4 + s4, yw3 + wall_thickness - 1)
 draw_wall(matrix_wall_parapet, xw4, y4 - 1, xw4, y1 + s1)
 
+matrix_wall_merlon = create_matrix(map_size)
+draw_wall_merlon(matrix_wall_merlon, matrix_wall_parapet)
+
 matrix_wall_tower = create_matrix(map_size)
 draw_tower(matrix_wall_tower, x1, y1, s1)
 draw_tower(matrix_wall_tower, x2, y2, s2)
@@ -1625,7 +1677,9 @@ for n in range(1):
 	matrixes.append(matrix_wall)
 for n in range(2):
 	matrixes.append(combine_matrix(map_size, matrix_wall_parapet, matrix_wall_tower_door))
-for n in range(4):
+for n in range(1):
+	matrixes.append(combine_matrix(map_size, matrix_wall_merlon, matrix_wall_tower_door))
+for n in range(3):
 	matrixes.append(matrix_wall_tower_door)
 for n in range(2):
 	matrixes.append(matrix_wall_tower)
