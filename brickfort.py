@@ -539,6 +539,21 @@ def export(file, size, river, riverbed, castle_outline, matrixes):
 					if check_matrix(matrix_wall, x, y, 1, 3):
 						emit_part(f, color, part_brick_3x1, x, y, layer * 3, 1)
 						fill_matrix(matrix_wall, x, y, 1, 3, False)
+		# 2x2 Corner
+		for y in range(size - 1):
+			for x in range(size - 1):
+				if matrix_wall[x][y] and matrix_wall[x + 1][y] and matrix_wall[x][y + 1] and not matrix_wall[x + 1][y + 1]:
+					emit_part(f, color, part_corner_2x2, x, y, layer * 3, 0)
+					fill_matrix(matrix_wall, x, y, 2, 2, False)
+				if matrix_wall[x][y] and matrix_wall[x + 1][y] and matrix_wall[x + 1][y + 1] and not matrix_wall[x][y + 1]:
+					emit_part(f, color, part_corner_2x2, x, y, layer * 3, 1)
+					fill_matrix(matrix_wall, x, y, 2, 2, False)
+				if matrix_wall[x][y] and matrix_wall[x][y + 1] and matrix_wall[x + 1][y + 1] and not matrix_wall[x + 1][y]:
+					emit_part(f, color, part_corner_2x2, x, y, layer * 3, 3)
+					fill_matrix(matrix_wall, x, y, 2, 2, False)
+				if not matrix_wall[x][y] and matrix_wall[x][y + 1] and matrix_wall[x + 1][y + 1] and matrix_wall[x + 1][y]:
+					emit_part(f, color, part_corner_2x2, x, y, layer * 3, 2)
+					fill_matrix(matrix_wall, x, y, 2, 2, False)
 		# 2x2
 		for y in range(size):
 			for x in range(size):
@@ -882,11 +897,12 @@ def export(file, size, river, riverbed, castle_outline, matrixes):
 					emit_part(f, color, part_corner_2x2, px1, py1, h3, 2)
 
 	emit_step(f, 'minifigures')
-	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (40 * SCALE + SCALE / 2, 30 * SCALE))
-	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (40 * SCALE + SCALE / 2, 35 * SCALE))
-	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (40 * SCALE + SCALE / 2, 40 * SCALE))
-	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (40 * SCALE + SCALE / 2, 45 * SCALE))
-	f.write('1 71 %s -70 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (40 * SCALE + SCALE / 2, 50 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 30 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 35 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 40 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 45 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 50 * SCALE))
+	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (36 * SCALE + SCALE / 2, 69 * SCALE))
 
 	f.write('0\n')
 
@@ -1426,7 +1442,13 @@ def draw_tower_window(matrix, x, y, r):
 	for n in range(0, r):
 		cell = Cell.WALL
 		if n >= 2 and n < r - 2:
-			if r == 14:
+			if r == 20:
+				cell = "11110111101111"[n - 2] == "1"
+			elif r == 18:
+				cell = Cell.WINDOW if n <= 7 or n >= 10 else Cell.WALL
+			elif r == 16:
+				cell = Cell.WINDOW if n <= 5 or n >= 10 else Cell.WALL
+			elif r == 14:
 				cell = Cell.WINDOW if n <= 5 or n >= 8 else Cell.WALL
 			else:
 				cell = Cell.WINDOW
@@ -1442,13 +1464,43 @@ def draw_tower_window(matrix, x, y, r):
 def draw_tower_outline(matrix, x, y, r):
 	for n in range(0, r):
 		matrix[x + n][y] = Cell.WALL
-		#matrix[x + n][y + 1] = Cell.WALL
 		matrix[x][y + n] = Cell.WALL
-		#matrix[x + 1][y + n] = Cell.WALL
-		#matrix[x + r - 2][y + n] = Cell.WALL
 		matrix[x + r - 1][y + n] = Cell.WALL
-		#matrix[x + n][y + r - 2] = Cell.WALL
 		matrix[x + n][y + r - 1] = Cell.WALL
+
+def draw_tower_merlon(matrix, x, y, r):
+	x2 = x + r - 1
+	y2 = y + r - 1
+	matrix[x][y] = Cell.WALL
+	matrix[x + 1][y] = Cell.WALL
+	matrix[x][y + 1] = Cell.WALL
+	matrix[x2][y] = Cell.WALL
+	matrix[x2][y + 1] = Cell.WALL
+	matrix[x2 - 1][y] = Cell.WALL
+	matrix[x][y2] = Cell.WALL
+	matrix[x + 1][y2] = Cell.WALL
+	matrix[x][y + r - 2] = Cell.WALL
+	matrix[x2][y2] = Cell.WALL
+	matrix[x2][y2 - 1] = Cell.WALL
+	matrix[x2 - 1][y2] = Cell.WALL
+	for n in range(3, r / 2, 3):
+		matrix[x + n][y] = Cell.WALL
+		matrix[x + n + 1][y] = Cell.WALL
+		matrix[x + n][y2] = Cell.WALL
+		matrix[x + n + 1][y2] = Cell.WALL
+		matrix[x][y + n] = Cell.WALL
+		matrix[x][y + n + 1] = Cell.WALL
+		matrix[x2][y + n] = Cell.WALL
+		matrix[x2][y + n + 1] = Cell.WALL
+	for n in range(r - 4, r / 2 - 2, -3):
+		matrix[x + n][y] = Cell.WALL
+		matrix[x + n - 1][y] = Cell.WALL
+		matrix[x + n][y2] = Cell.WALL
+		matrix[x + n - 1][y2] = Cell.WALL
+		matrix[x][y + n] = Cell.WALL
+		matrix[x][y + n - 1] = Cell.WALL
+		matrix[x2][y + n] = Cell.WALL
+		matrix[x2][y + n - 1] = Cell.WALL
 
 def draw_cell(matrix, x1, y1, x2, y2, cell):
 	for x in range(min(x1, x2), max(x1, x2) + 1):
@@ -1470,8 +1522,8 @@ max_x = map_size - margin
 max_y = map_size - margin
 
 spread = 8
-min_tower_size = 14
-max_tower_size = 14
+min_tower_size = 20
+max_tower_size = 20
 
 min_x_a = mod2(min_x)
 max_x_a = mod2(min_x + spread)
@@ -1561,13 +1613,19 @@ draw_tower_outline(matrix_wall_tower_parapet, x2, y2, s2)
 draw_tower_outline(matrix_wall_tower_parapet, x3, y3, s3)
 draw_tower_outline(matrix_wall_tower_parapet, x4, y4, s4)
 
+matrix_wall_tower_merlon = create_matrix(map_size)
+draw_tower_merlon(matrix_wall_tower_merlon, x1, y1, s1)
+draw_tower_merlon(matrix_wall_tower_merlon, x2, y2, s2)
+draw_tower_merlon(matrix_wall_tower_merlon, x3, y3, s3)
+draw_tower_merlon(matrix_wall_tower_merlon, x4, y4, s4)
+
 for n in range(11):
 	matrixes.append(matrix_ground)
 for n in range(1):
 	matrixes.append(matrix_wall)
 for n in range(2):
 	matrixes.append(combine_matrix(map_size, matrix_wall_parapet, matrix_wall_tower_door))
-for n in range(3):
+for n in range(4):
 	matrixes.append(matrix_wall_tower_door)
 for n in range(2):
 	matrixes.append(matrix_wall_tower)
@@ -1581,5 +1639,7 @@ for n in range(1):
 	matrixes.append(matrix_wall_tower)
 for n in range(2):
 	matrixes.append(matrix_wall_tower_parapet)
+for n in range(1):
+	matrixes.append(matrix_wall_tower_merlon)
 
 export('castle.ldr', map_size, grid_river, grid_riverbed, [], matrixes)
