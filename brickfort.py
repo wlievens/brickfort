@@ -465,10 +465,13 @@ def export(file, size, river, riverbed, castle_outline, matrixes):
 						if width == 1 and height == 9 and layers == 11:
 							emit_part(f, color_dark_bley, part_portcullis, x, y, layer * 3 - part_sizes[part_portcullis][2] + 2, 1)
 	
+	def check_xy(x, y, map_size):
+		return x >= 0 and y >= 0 and x < map_size and y < map_size
+	
 	def check_matrix(matrix, x, y, w, h):
 		for bx in range(w):
 			for by in range(h):
-				if not matrix[x + bx][y + by]:
+				if not check_xy(x + bx, y + by, len(matrix)) or not matrix[x + bx][y + by]:
 					return False
 		return True
 	
@@ -1064,7 +1067,7 @@ def generate_castle_outline(size, offset):
 	return path
 
 	
-map_size = 32 * 3
+map_size = 32 * 4
 
 random.seed(1234)
 
@@ -1620,12 +1623,6 @@ def lerp(t, a, b):
 def prel(x, a, b):
 	return 1.0 * (x - a) / (b - a)
 
-def rebalance(t, s, a, b, c, d):
-	t = int(round(lerp(prel(t, a, b), c, d)))
-	if (t - s / 2) % 2 == 1:
-		return t - 1
-	return t
-
 offset = find_castle_offset(map_size, grid_river, grid_riverbed)
 
 margin = 4
@@ -1634,65 +1631,98 @@ max_tower_size = 16
 window_height = 4
 wall_thickness = 5
 
-min_x = mod2(offset + max_tower_size / 2)
+min_x = mod2(offset + margin + max_tower_size / 2)
 max_x = mod2(map_size - margin - max_tower_size / 2)
 min_y = mod2(margin + max_tower_size / 2)
 max_y = mod2(map_size - margin - max_tower_size / 2)
 
-towers = []
+edges = []
 retries = 0
-while len(towers) < 6:
-	s = mod2(random.randint(min_tower_size, max_tower_size))
+max_retries = 0
+while len(edges) < 5:
 	x = random.randint(min_x, max_x)
 	y = random.randint(min_y, max_y)
 	retries = retries + 1
 	if retries > 100:
-		towers.pop(random.randrange(len(towers)))
+		edges.pop(random.randrange(len(edges)))
 		retries = 0
 	conflict = False
-	ax1 = x - s / 2
-	ay1 = y - s / 2
-	ax2 = x + s / 2
-	ay2 = y + s / 2
-	assert ax1 >= 0
-	assert ay1 >= 0
-	assert ax2 < map_size
-	assert ay2 < map_size
-	min_distance = 5
-	for tower in towers:
-		x2 = tower[0]
-		y2 = tower[1]
-		s2 = tower[2]
-		bx1 = x2 - s2 / 2
-		by1 = y2 - s2 / 2
-		bx2 = x2 + s2 / 2
-		by2 = y2 + s2 / 2
+	ax1 = x
+	ay1 = y
+	ax2 = x
+	ay2 = y
+	for edge in edges:
+		x2 = edge[0]
+		y2 = edge[1]
+		bx1 = x2
+		by1 = y2
+		bx2 = x2
+		by2 = y2
 		if not (bx1 > ax1 or bx2 < ax1 or bx1 > bx1 or bx2 < bx2):
 			conflict = True
 			break
-		distance = distance4(x, y, x2, y2)
-		if distance < min_distance + s + s2:
+		if x != x2 and abs(x - x2) < 16:
 			conflict = True
 			break
+		if y != y2 and abs(y - y2) < 16:
+			conflict = True
+			break
+		distance = distance4(x, y, x2, y2)
 		distance = distance4(x, y, (min_x + max_x) / 2, (min_y + max_y) / 2)
-		if distance < 20:
+		if distance < 15:
 			conflict = True
 			break
 	if conflict:
 		continue
-	towers.append((x,y, s))
-	towers = convex_hull(towers)
+	edges.append((x, y))
+	edges = convex_hull(edges)
 	retries = 0
 
-gen_min_x = min(map(lambda t: t[0], towers))
-gen_max_x = max(map(lambda t: t[0], towers))
-gen_min_y = min(map(lambda t: t[1], towers))
-gen_max_y = max(map(lambda t: t[1], towers))
+gatehouse = edges[0]
 
-towers = map(lambda t: (rebalance(t[0], t[2], gen_min_x, gen_max_x, min_x, max_x), rebalance(t[1], t[2], gen_min_y, gen_max_y, min_y, max_y), t[2]), towers)
-print towers
+#edges = [(40, 30), (90, 50), (70, 70), (60, 90)]
 
-towers[2] = (66, 10, 12)
+tower_centers = []
+for n in range(len(edges)):
+	edge1 = edges[n]
+	edge2 = edges[(n + 1) % len(edges)]
+	x1 = edge1[0]
+	y1 = edge1[1]
+	x2 = edge2[0]
+	y2 = edge2[1]
+	tower_centers.append(edge1)
+	if x1 < x2:
+		if y1 < y2:
+			tower_centers.append((x2, y1))
+		else:
+			tower_centers.append((x1, y2))
+	else:
+		if y1 < y2:
+			tower_centers.append((x1, y2))
+		else:
+			tower_centers.append((x2, y1))
+
+gen_min_x = min(map(lambda t: t[0], tower_centers))
+gen_max_x = max(map(lambda t: t[0], tower_centers))
+gen_min_y = min(map(lambda t: t[1], tower_centers))
+gen_max_y = max(map(lambda t: t[1], tower_centers))
+
+def rebalance(t, s, a, b, c, d):
+	t = int(round(lerp(prel(t, a, b), c, d)))
+	return t - (t - s / 2) % 2
+
+def make_tower(p):
+	s = mod2(random.randint(min_tower_size, max_tower_size))
+	x = rebalance(p[0], s, gen_min_x, gen_max_x, min_x, max_x)
+	y = rebalance(p[1], s, gen_min_y, gen_max_y, min_y, max_y)
+	return (x, y, s)
+
+print 'tower_centers : ' + str(tower_centers)
+print 'sanitzed      : ' + str(sanitize_path(tower_centers))
+
+towers = map(make_tower, sanitize_path(tower_centers))
+
+print 'towers        : ' + str(towers)
 
 matrixes = []
 
@@ -1723,41 +1753,45 @@ for n in range(len(towers)):
 	t2y = tower2[1]
 	t2s = tower2[2]
 	door_margin = 0
-	t1x1 = t1x - t1s / 2 + door_margin
-	t1x2 = t1x + t1s / 2 - door_margin
-	t2x1 = t2x - t1s / 2 + door_margin
-	t2x2 = t2x + t1s / 2 - door_margin
-	if (t1x2 > t2x1 and t1x1 < t2x2) or (t2x2 > t1x1 and t2x1 < t1x2):
-		wx = random.randrange(max(t1x1, t2x1), min(t1x2, t2x2) - 1)
-		wx1 = wx - wall_thickness / 2
-		wx2 = wx + wall_thickness / 2
-		if t1y < t2y:
-			wy1 = t1y + t1s / 2
-			wy2 = t2y - t2s / 2 - 1
-		else:
-			wy1 = t2y + t2s / 2
-			wy2 = t1y - t1s / 2 - 1
+	t1y1 = t1y - t1s / 2
+	t1y2 = t1y + t1s / 2
+	t2y1 = t2y - t2s / 2
+	t2y2 = t2y + t2s / 2
+	t1x1 = t1x - t1s / 2
+	t1x2 = t1x + t1s / 2
+	t2x1 = t2x - t2s / 2
+	t2x2 = t2x + t2s / 2
+	if t1x < t2x and abs(t1y - t2y) < 4:
+		wx1 = t1x2
+		wx2 = t2x1 - 1
+		wy1 = t1y - wall_thickness / 2
+		wy2 = t1y + wall_thickness / 2
 		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
-	t1y1 = t1y - t1s / 2 + door_margin
-	t1y2 = t1y + t1s / 2 - door_margin
-	t2y1 = t2y - t1s / 2 + door_margin
-	t2y2 = t2y + t1s / 2 - door_margin
-	if (t1y2 > t2y1 and t1y1 < t2y2) or (t2y2 > t1y1 and t2y1 < t1y2):
-		wy = random.randrange(max(t1y1, t2y1), min(t1y2, t2y2) - 1)
-		wy1 = wy - wall_thickness / 2
-		wy2 = wy + wall_thickness / 2
-		if t1x < t2x:
-			wx1 = t1x + t1s / 2
-			wx2 = t2x - t2s / 2 - 1
-		else:
-			wx1 = t2x + t2s / 2
-			wx2 = t1x - t1s / 2 - 1
+	if t1x > t2x and abs(t1y - t2y) < 4:
+		wx1 = t1x1 - 1
+		wx2 = t2x2
+		wy1 = t1y - wall_thickness / 2
+		wy2 = t1y + wall_thickness / 2
+		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
+	if abs(t1x - t2x) < 4 and t1y < t2y:
+		wx1 = t1x - wall_thickness / 2
+		wx2 = t1x + wall_thickness / 2
+		wy1 = t1y2
+		wy2 = t2y1 - 1
+		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
+	if abs(t1x - t2x) < 4 and t1y > t2y:
+		wx1 = t1x - wall_thickness / 2
+		wx2 = t1x + wall_thickness / 2
+		wy1 = t1y1 - 1
+		wy2 = t2y2
 		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
 
 matrix_base = combine_matrix(map_size, matrix_wall, matrix_tower_wall)
 
-for n in range(14):
+for n in range(12):
 	matrixes.append(matrix_base)
+for n in range(5):
+	matrixes.append(matrix_tower_wall)
 for n in range(window_height):
 	matrixes.append(matrix_tower_window)
 for n in range(2):
@@ -1770,7 +1804,7 @@ for n in range(2):
 	matrixes.append(matrix_tower_parapet)
 matrixes.append(matrix_tower_merlon)
 
-matrixes = [matrix_tower_wall, matrix_wall]
+#matrixes = [matrix_tower_wall, matrix_wall]
 
 #matrix_tower_wall = create_matrix(map_size)
 #for n in range(len(towers)):
