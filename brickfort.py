@@ -936,6 +936,10 @@ def generate_river(size):
 	return grid
 
 	
+def distance4(x1, y1, x2, y2):
+	return abs(x1-x2) + abs(y1-y2)
+
+	
 def distance8(x1, y1, x2, y2):
 	return max(abs(x1-x2), abs(y1-y2))
 
@@ -1062,7 +1066,7 @@ def generate_castle_outline(size, offset):
 	
 map_size = 32 * 3
 
-random.seed(1)
+random.seed(1234)
 
 grid_river = generate_river(map_size)
 grid_riverbed = generate_riverbed(map_size, grid_river)
@@ -1426,7 +1430,7 @@ for n in range(2):
 for n in range(1):
 	matrixes.append(template_to_matrix(data5))
 
-def draw_tower(matrix, x, y, r):
+def draw_tower_wall(matrix, x, y, r):
 	for n in range(0, r):
 		matrix[x + n][y] = Cell.WALL
 		matrix[x + n][y + 1] = Cell.WALL
@@ -1435,6 +1439,13 @@ def draw_tower(matrix, x, y, r):
 		matrix[x + r - 2][y + n] = Cell.WALL
 		matrix[x + r - 1][y + n] = Cell.WALL
 		matrix[x + n][y + r - 2] = Cell.WALL
+		matrix[x + n][y + r - 1] = Cell.WALL
+
+def draw_tower_parapet(matrix, x, y, r):
+	for n in range(0, r):
+		matrix[x + n][y] = Cell.WALL
+		matrix[x][y + n] = Cell.WALL
+		matrix[x + r - 1][y + n] = Cell.WALL
 		matrix[x + n][y + r - 1] = Cell.WALL
 
 WINDOW_PATTERNS = ["__1111__1111__1111__",
@@ -1562,138 +1573,322 @@ def draw_wall_merlon(matrix, source):
 def mod2(n):
 	return n - n % 2
 
+def convex_hull(points):
+    """Computes the convex hull of a set of 2D points.
+
+    Input: an iterable sequence of (x, y) pairs representing the points.
+    Output: a list of vertices of the convex hull in counter-clockwise order,
+      starting from the vertex with the lexicographically smallest coordinates.
+    Implements Andrew's monotone chain algorithm. O(n log n) complexity.
+    """
+
+    # Sort the points lexicographically (tuples are compared lexicographically).
+    # Remove duplicates to detect the case we have just one unique point.
+    points = sorted(set(points))
+
+    # Boring case: no points or a single point, possibly repeated multiple times.
+    if len(points) <= 1:
+        return points
+
+    # 2D cross product of OA and OB vectors, i.e. z-component of their 3D cross product.
+    # Returns a positive value, if OAB makes a counter-clockwise turn,
+    # negative for clockwise turn, and zero if the points are collinear.
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    # Build lower hull 
+    lower = []
+    for p in points:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+            lower.pop()
+        lower.append(p)
+
+    # Build upper hull
+    upper = []
+    for p in reversed(points):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+            upper.pop()
+        upper.append(p)
+
+    # Concatenation of the lower and upper hulls gives the convex hull.
+    # Last point of each list is omitted because it is repeated at the beginning of the other list. 
+    return lower[:-1] + upper[:-1]
+
+def lerp(t, a, b):
+	return a + (b - a) * t
+
+def prel(x, a, b):
+	return 1.0 * (x - a) / (b - a)
+
+def rebalance(t, s, a, b, c, d):
+	t = int(round(lerp(prel(t, a, b), c, d)))
+	if (t - s / 2) % 2 == 1:
+		return t - 1
+	return t
+
 offset = find_castle_offset(map_size, grid_river, grid_riverbed)
 
-margin = 2
-min_x = offset
-min_y = margin
-max_x = map_size - margin
-max_y = map_size - margin
+margin = 4
+min_tower_size = 10
+max_tower_size = 16
+window_height = 4
+wall_thickness = 5
 
-spread = 8
-min_tower_size = 20
-max_tower_size = 20
+min_x = mod2(offset + max_tower_size / 2)
+max_x = mod2(map_size - margin - max_tower_size / 2)
+min_y = mod2(margin + max_tower_size / 2)
+max_y = mod2(map_size - margin - max_tower_size / 2)
 
-min_x_a = mod2(min_x)
-max_x_a = mod2(min_x + spread)
-min_y_a = mod2(min_y)
-max_y_a = mod2(min_y + spread)
+towers = []
+retries = 0
+while len(towers) < 6:
+	s = mod2(random.randint(min_tower_size, max_tower_size))
+	x = random.randint(min_x, max_x)
+	y = random.randint(min_y, max_y)
+	retries = retries + 1
+	if retries > 100:
+		towers.pop(random.randrange(len(towers)))
+		retries = 0
+	conflict = False
+	ax1 = x - s / 2
+	ay1 = y - s / 2
+	ax2 = x + s / 2
+	ay2 = y + s / 2
+	assert ax1 >= 0
+	assert ay1 >= 0
+	assert ax2 < map_size
+	assert ay2 < map_size
+	min_distance = 5
+	for tower in towers:
+		x2 = tower[0]
+		y2 = tower[1]
+		s2 = tower[2]
+		bx1 = x2 - s2 / 2
+		by1 = y2 - s2 / 2
+		bx2 = x2 + s2 / 2
+		by2 = y2 + s2 / 2
+		if not (bx1 > ax1 or bx2 < ax1 or bx1 > bx1 or bx2 < bx2):
+			conflict = True
+			break
+		distance = distance4(x, y, x2, y2)
+		if distance < min_distance + s + s2:
+			conflict = True
+			break
+		distance = distance4(x, y, (min_x + max_x) / 2, (min_y + max_y) / 2)
+		if distance < 20:
+			conflict = True
+			break
+	if conflict:
+		continue
+	towers.append((x,y, s))
+	towers = convex_hull(towers)
+	retries = 0
 
-min_x_b = mod2(max_x - max_tower_size - spread)
-max_x_b = mod2(max_x - max_tower_size)
-min_y_b = mod2(max_y - max_tower_size - spread)
-max_y_b = mod2(max_y - max_tower_size)
+gen_min_x = min(map(lambda t: t[0], towers))
+gen_max_x = max(map(lambda t: t[0], towers))
+gen_min_y = min(map(lambda t: t[1], towers))
+gen_max_y = max(map(lambda t: t[1], towers))
 
-x1 = mod2(random.randint(min_x_a, max_x_a))
-y1 = mod2(random.randint(min_y_a, max_y_a))
-x2 = mod2(random.randint(min_x_b, max_x_b))
-y2 = mod2(random.randint(min_y_a, max_y_a))
-x3 = mod2(random.randint(min_x_b, max_x_b))
-y3 = mod2(random.randint(min_y_b, max_y_b))
-x4 = mod2(random.randint(min_x_a, max_x_a))
-y4 = mod2(random.randint(min_y_b, max_y_b))
+towers = map(lambda t: (rebalance(t[0], t[2], gen_min_x, gen_max_x, min_x, max_x), rebalance(t[1], t[2], gen_min_y, gen_max_y, min_y, max_y), t[2]), towers)
+print towers
 
-s1 = mod2(random.randint(min_tower_size, max_tower_size))
-s2 = mod2(random.randint(min_tower_size, max_tower_size))
-s3 = mod2(random.randint(min_tower_size, max_tower_size))
-s4 = mod2(random.randint(min_tower_size, max_tower_size))
+towers[2] = (66, 10, 12)
 
 matrixes = []
 
-matrix_ground = create_matrix(map_size)
+matrix_wall = create_matrix(map_size)
+matrix_tower_wall = create_matrix(map_size)
+matrix_tower_window = create_matrix(map_size)
+matrix_tower_parapet = create_matrix(map_size)
+matrix_tower_merlon = create_matrix(map_size)
 
-wall_thickness = 5
+for tower in towers:
+	x = tower[0]
+	y = tower[1]
+	s = tower[2]
+	x1 = x - s / 2
+	y1 = y - s / 2
+	draw_tower_wall(matrix_tower_wall, x1, y1, s)
+	draw_tower_window(matrix_tower_window, x1, y1, s)
+	draw_tower_parapet(matrix_tower_parapet, x1, y1, s)
+	draw_tower_merlon(matrix_tower_merlon, x1, y1, s)
 
-draw_tower(matrix_ground, x1, y1, s1)
-draw_tower(matrix_ground, x2, y2, s2)
-draw_tower(matrix_ground, x3, y3, s3)
-draw_tower(matrix_ground, x4, y4, s4)
+for n in range(len(towers)):
+	tower1 = towers[n]
+	tower2 = towers[(n + 1) % len(towers)]
+	t1x = tower1[0]
+	t1y = tower1[1]
+	t1s = tower1[2]
+	t2x = tower2[0]
+	t2y = tower2[1]
+	t2s = tower2[2]
+	door_margin = 0
+	t1x1 = t1x - t1s / 2 + door_margin
+	t1x2 = t1x + t1s / 2 - door_margin
+	t2x1 = t2x - t1s / 2 + door_margin
+	t2x2 = t2x + t1s / 2 - door_margin
+	if (t1x2 > t2x1 and t1x1 < t2x2) or (t2x2 > t1x1 and t2x1 < t1x2):
+		wx = random.randrange(max(t1x1, t2x1), min(t1x2, t2x2) - 1)
+		wx1 = wx - wall_thickness / 2
+		wx2 = wx + wall_thickness / 2
+		if t1y < t2y:
+			wy1 = t1y + t1s / 2
+			wy2 = t2y - t2s / 2 - 1
+		else:
+			wy1 = t2y + t2s / 2
+			wy2 = t1y - t1s / 2 - 1
+		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
+	t1y1 = t1y - t1s / 2 + door_margin
+	t1y2 = t1y + t1s / 2 - door_margin
+	t2y1 = t2y - t1s / 2 + door_margin
+	t2y2 = t2y + t1s / 2 - door_margin
+	if (t1y2 > t2y1 and t1y1 < t2y2) or (t2y2 > t1y1 and t2y1 < t1y2):
+		wy = random.randrange(max(t1y1, t2y1), min(t1y2, t2y2) - 1)
+		wy1 = wy - wall_thickness / 2
+		wy2 = wy + wall_thickness / 2
+		if t1x < t2x:
+			wx1 = t1x + t1s / 2
+			wx2 = t2x - t2s / 2 - 1
+		else:
+			wx1 = t2x + t2s / 2
+			wx2 = t1x - t1s / 2 - 1
+		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
 
-yw1 = mod2((min(y1 + s1, y2 + s2) + max(y1, y2)) / 2)
-xw2 = mod2((min(x2 + s2, x3 + s3) + max(x2, x3)) / 2)
-yw3 = mod2((min(y3 + s3, y4 + s4) + max(y3, y4)) / 2)
-xw4 = mod2((min(x4 + s4, x1 + s1) + max(x4, x1)) / 2)
+matrix_base = combine_matrix(map_size, matrix_wall, matrix_tower_wall)
 
-draw_wall(matrix_ground, x1 + s1, yw1, x2, yw1 + wall_thickness - 1)
-draw_wall(matrix_ground, xw2, y2 + s2, xw2 + wall_thickness - 1, y3)
-draw_wall(matrix_ground, x3, yw3, x4 + s4 - 2, yw3 + wall_thickness - 1)
-
-ym1 = (y4 - y1) / 2 + 5
-ym2 = (y4 - y1) / 2 - 5
-draw_wall(matrix_ground, xw4, y4, xw4 + wall_thickness - 1, ym1)
-draw_wall(matrix_ground, xw4, ym2, xw4 + wall_thickness - 1, y1 + s1 - 2)
-draw_cell(matrix_ground, xw4, ym2 + 1, xw4, ym1 - 1, Cell.PORTCULLIS)
-
-matrix_wall = copy_matrix(map_size, matrix_ground)
-draw_wall(matrix_wall, xw4, y4, xw4 + wall_thickness - 1, y1 + s1 - 2)
-
-matrix_wall_parapet = create_matrix(map_size)
-draw_wall(matrix_wall_parapet, x1 + s1, yw1, x2 - 1, yw1)
-draw_wall(matrix_wall_parapet, xw2 + wall_thickness - 1, y2 + s2, xw2 + wall_thickness - 1, y3 - 1)
-draw_wall(matrix_wall_parapet, x3 - 1, yw3 + wall_thickness - 1, x4 + s4, yw3 + wall_thickness - 1)
-draw_wall(matrix_wall_parapet, xw4, y4 - 1, xw4, y1 + s1)
-
-matrix_wall_merlon = create_matrix(map_size)
-draw_wall_merlon(matrix_wall_merlon, matrix_wall_parapet)
-
-matrix_wall_tower = create_matrix(map_size)
-draw_tower(matrix_wall_tower, x1, y1, s1)
-draw_tower(matrix_wall_tower, x2, y2, s2)
-draw_tower(matrix_wall_tower, x3, y3, s3)
-draw_tower(matrix_wall_tower, x4, y4, s4)
-
-matrix_wall_tower_door = copy_matrix(map_size, matrix_wall_tower)
-for n in range(wall_thickness):
-	draw_cell(matrix_wall_tower_door, x1 + s1 - 2, yw1, x1 + s1 - 1, yw1 + wall_thickness, Cell.DOOR)
-	draw_cell(matrix_wall_tower_door, xw4, y1 + s1 - 2, xw4 + wall_thickness, y1 + s1 - 1, Cell.DOOR)
-	draw_cell(matrix_wall_tower_door, x2, yw1, x2 + 1, yw1 + wall_thickness, Cell.DOOR)
-	draw_cell(matrix_wall_tower_door, xw2 - 1, y2 + s2 - 2, xw2 + wall_thickness - 1, y2 + s2 - 1, Cell.DOOR)
-	draw_cell(matrix_wall_tower_door, xw2 - 1, y3, xw2 + wall_thickness - 1, y3 + 1, Cell.DOOR)
-	draw_cell(matrix_wall_tower_door, x3, yw3 - 1, x3 + 1, yw3 + wall_thickness - 1, Cell.DOOR)
-	draw_cell(matrix_wall_tower_door, x4 + s4 - 2, yw3 - 1, x4 + s4 - 1, yw3 + wall_thickness - 1, Cell.DOOR)
-	draw_cell(matrix_wall_tower_door, xw4, y4, xw4 + wall_thickness, y4 + 1, Cell.DOOR)
-
-matrix_wall_tower_window = create_matrix(map_size)
-draw_tower_window(matrix_wall_tower_window, x1, y1, s1)
-draw_tower_window(matrix_wall_tower_window, x2, y2, s2)
-draw_tower_window(matrix_wall_tower_window, x3, y3, s3)
-draw_tower_window(matrix_wall_tower_window, x4, y4, s4)
-
-matrix_wall_tower_parapet = create_matrix(map_size)
-draw_tower_outline(matrix_wall_tower_parapet, x1, y1, s1)
-draw_tower_outline(matrix_wall_tower_parapet, x2, y2, s2)
-draw_tower_outline(matrix_wall_tower_parapet, x3, y3, s3)
-draw_tower_outline(matrix_wall_tower_parapet, x4, y4, s4)
-
-matrix_wall_tower_merlon = create_matrix(map_size)
-draw_tower_merlon(matrix_wall_tower_merlon, x1, y1, s1)
-draw_tower_merlon(matrix_wall_tower_merlon, x2, y2, s2)
-draw_tower_merlon(matrix_wall_tower_merlon, x3, y3, s3)
-draw_tower_merlon(matrix_wall_tower_merlon, x4, y4, s4)
-
-for n in range(11):
-	matrixes.append(matrix_ground)
-for n in range(1):
-	matrixes.append(matrix_wall)
+for n in range(14):
+	matrixes.append(matrix_base)
+for n in range(window_height):
+	matrixes.append(matrix_tower_window)
 for n in range(2):
-	matrixes.append(combine_matrix(map_size, matrix_wall_parapet, matrix_wall_tower_door))
+	matrixes.append(matrix_tower_wall)
+for n in range(window_height):
+	matrixes.append(matrix_tower_window)
 for n in range(1):
-	matrixes.append(combine_matrix(map_size, matrix_wall_merlon, matrix_wall_tower_door))
-for n in range(3):
-	matrixes.append(matrix_wall_tower_door)
+	matrixes.append(matrix_tower_wall)
 for n in range(2):
-	matrixes.append(matrix_wall_tower)
-for n in range(3):
-	matrixes.append(matrix_wall_tower_window)
-for n in range(2):
-	matrixes.append(matrix_wall_tower)
-for n in range(3):
-	matrixes.append(matrix_wall_tower_window)
-for n in range(1):
-	matrixes.append(matrix_wall_tower)
-for n in range(2):
-	matrixes.append(matrix_wall_tower_parapet)
-for n in range(1):
-	matrixes.append(matrix_wall_tower_merlon)
+	matrixes.append(matrix_tower_parapet)
+matrixes.append(matrix_tower_merlon)
+
+matrixes = [matrix_tower_wall, matrix_wall]
+
+#matrix_tower_wall = create_matrix(map_size)
+#for n in range(len(towers)):
+#	tower = towers[n]
+#	x = tower[0]
+#	y = tower[1]
+#	for k in range(n + 1):
+#		matrix_tower_wall[x + k][y] = True
+#matrixes = [matrix_tower_wall]
+
+
+#x1 = mod2(random.randint(min_x_a, max_x_a))
+#y1 = mod2(random.randint(min_y_a, max_y_a))
+#x2 = mod2(random.randint(min_x_b, max_x_b))
+#y2 = mod2(random.randint(min_y_a, max_y_a))
+#x3 = mod2(random.randint(min_x_b, max_x_b))
+#y3 = mod2(random.randint(min_y_b, max_y_b))
+#x4 = mod2(random.randint(min_x_a, max_x_a))
+#y4 = mod2(random.randint(min_y_b, max_y_b))
+#
+#s1 = mod2(random.randint(min_tower_size, max_tower_size))
+#s2 = mod2(random.randint(min_tower_size, max_tower_size))
+#s3 = mod2(random.randint(min_tower_size, max_tower_size))
+#s4 = mod2(random.randint(min_tower_size, max_tower_size))
+#
+#
+#matrix_ground = create_matrix(map_size)
+#
+#draw_tower(matrix_ground, x1, y1, s1)
+#draw_tower(matrix_ground, x2, y2, s2)
+#draw_tower(matrix_ground, x3, y3, s3)
+#draw_tower(matrix_ground, x4, y4, s4)
+#
+#yw1 = mod2((min(y1 + s1, y2 + s2) + max(y1, y2)) / 2)
+#xw2 = mod2((min(x2 + s2, x3 + s3) + max(x2, x3)) / 2)
+#yw3 = mod2((min(y3 + s3, y4 + s4) + max(y3, y4)) / 2)
+#xw4 = mod2((min(x4 + s4, x1 + s1) + max(x4, x1)) / 2)
+#
+#draw_wall(matrix_ground, x1 + s1, yw1, x2, yw1 + wall_thickness - 1)
+#draw_wall(matrix_ground, xw2, y2 + s2, xw2 + wall_thickness - 1, y3)
+#draw_wall(matrix_ground, x3, yw3, x4 + s4 - 2, yw3 + wall_thickness - 1)
+#
+#ym1 = (y4 - y1) / 2 + 5
+#ym2 = (y4 - y1) / 2 - 5
+#draw_wall(matrix_ground, xw4, y4, xw4 + wall_thickness - 1, ym1)
+#draw_wall(matrix_ground, xw4, ym2, xw4 + wall_thickness - 1, y1 + s1 - 2)
+#draw_cell(matrix_ground, xw4, ym2 + 1, xw4, ym1 - 1, Cell.PORTCULLIS)
+#
+#matrix_wall = copy_matrix(map_size, matrix_ground)
+#draw_wall(matrix_wall, xw4, y4, xw4 + wall_thickness - 1, y1 + s1 - 2)
+#
+#matrix_wall_parapet = create_matrix(map_size)
+#draw_wall(matrix_wall_parapet, x1 + s1, yw1, x2 - 1, yw1)
+#draw_wall(matrix_wall_parapet, xw2 + wall_thickness - 1, y2 + s2, xw2 + wall_thickness - 1, y3 - 1)
+#draw_wall(matrix_wall_parapet, x3 - 1, yw3 + wall_thickness - 1, x4 + s4, yw3 + wall_thickness - 1)
+#draw_wall(matrix_wall_parapet, xw4, y4 - 1, xw4, y1 + s1)
+#
+#matrix_wall_merlon = create_matrix(map_size)
+#draw_wall_merlon(matrix_wall_merlon, matrix_wall_parapet)
+#
+#matrix_wall_tower = create_matrix(map_size)
+#draw_tower(matrix_wall_tower, x1, y1, s1)
+#draw_tower(matrix_wall_tower, x2, y2, s2)
+#draw_tower(matrix_wall_tower, x3, y3, s3)
+#draw_tower(matrix_wall_tower, x4, y4, s4)
+#
+#matrix_wall_tower_door = copy_matrix(map_size, matrix_wall_tower)
+#for n in range(wall_thickness):
+#	draw_cell(matrix_wall_tower_door, x1 + s1 - 2, yw1, x1 + s1 - 1, yw1 + wall_thickness, Cell.DOOR)
+#	draw_cell(matrix_wall_tower_door, xw4, y1 + s1 - 2, xw4 + wall_thickness, y1 + s1 - 1, Cell.DOOR)
+#	draw_cell(matrix_wall_tower_door, x2, yw1, x2 + 1, yw1 + wall_thickness, Cell.DOOR)
+#	draw_cell(matrix_wall_tower_door, xw2 - 1, y2 + s2 - 2, xw2 + wall_thickness - 1, y2 + s2 - 1, Cell.DOOR)
+#	draw_cell(matrix_wall_tower_door, xw2 - 1, y3, xw2 + wall_thickness - 1, y3 + 1, Cell.DOOR)
+#	draw_cell(matrix_wall_tower_door, x3, yw3 - 1, x3 + 1, yw3 + wall_thickness - 1, Cell.DOOR)
+#	draw_cell(matrix_wall_tower_door, x4 + s4 - 2, yw3 - 1, x4 + s4 - 1, yw3 + wall_thickness - 1, Cell.DOOR)
+#	draw_cell(matrix_wall_tower_door, xw4, y4, xw4 + wall_thickness, y4 + 1, Cell.DOOR)
+#
+#matrix_wall_tower_window = create_matrix(map_size)
+#draw_tower_window(matrix_wall_tower_window, x1, y1, s1)
+#draw_tower_window(matrix_wall_tower_window, x2, y2, s2)
+#draw_tower_window(matrix_wall_tower_window, x3, y3, s3)
+#draw_tower_window(matrix_wall_tower_window, x4, y4, s4)
+#
+#matrix_wall_tower_parapet = create_matrix(map_size)
+#draw_tower_outline(matrix_wall_tower_parapet, x1, y1, s1)
+#draw_tower_outline(matrix_wall_tower_parapet, x2, y2, s2)
+#draw_tower_outline(matrix_wall_tower_parapet, x3, y3, s3)
+#draw_tower_outline(matrix_wall_tower_parapet, x4, y4, s4)
+#
+#matrix_wall_tower_merlon = create_matrix(map_size)
+#draw_tower_merlon(matrix_wall_tower_merlon, x1, y1, s1)
+#draw_tower_merlon(matrix_wall_tower_merlon, x2, y2, s2)
+#draw_tower_merlon(matrix_wall_tower_merlon, x3, y3, s3)
+#draw_tower_merlon(matrix_wall_tower_merlon, x4, y4, s4)
+#
+#for n in range(11):
+#	matrixes.append(matrix_ground)
+#for n in range(1):
+#	matrixes.append(matrix_wall)
+#for n in range(2):
+#	matrixes.append(combine_matrix(map_size, matrix_wall_parapet, matrix_wall_tower_door))
+#for n in range(1):
+#	matrixes.append(combine_matrix(map_size, matrix_wall_merlon, matrix_wall_tower_door))
+#for n in range(3):
+#	matrixes.append(matrix_wall_tower_door)
+#for n in range(2):
+#	matrixes.append(matrix_wall_tower)
+#for n in range(3):
+#	matrixes.append(matrix_wall_tower_window)
+#for n in range(2):
+#	matrixes.append(matrix_wall_tower)
+#for n in range(3):
+#	matrixes.append(matrix_wall_tower_window)
+#for n in range(1):
+#	matrixes.append(matrix_wall_tower)
+#for n in range(2):
+#	matrixes.append(matrix_wall_tower_parapet)
+#for n in range(1):
+#	matrixes.append(matrix_wall_tower_merlon)
 
 export('castle.ldr', map_size, grid_river, grid_riverbed, [], matrixes)
