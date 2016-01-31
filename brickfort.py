@@ -146,13 +146,16 @@ def copy_matrix(size, matrix):
 			result[x][y] = matrix[x][y]
 	return result
 
-def combine_matrix(size, a, b):
+def combine_matrix(size, *list):
 	result = create_matrix(size)
 	for y in range(size):
 		for x in range(size):
-			va = a[x][y]
-			vb = b[x][y]
-			result[x][y] = max(va, vb)
+			m = 0
+			for matrix in list:
+				v = matrix[x][y]
+				if v > m:
+					m = v
+			result[x][y] = m
 	return result
 
 def points_to_matrix(size, points):
@@ -1280,8 +1283,8 @@ grid_riverbed = generate_riverbed(map_size, grid_river)
 offset = find_castle_offset(map_size, grid_river, grid_riverbed)
 
 margin = 4
-min_tower_size = 10
-max_tower_size = 16
+min_tower_size = 14
+max_tower_size = 14
 window_height = 4
 wall_thickness = 5
 
@@ -1293,6 +1296,7 @@ max_y = mod2(map_size - margin - max_tower_size / 2)
 edges = []
 retries = 0
 max_retries = 0
+min_edge_distance = 16
 while len(edges) < 5:
 	x = random.randint(min_x, max_x)
 	y = random.randint(min_y, max_y)
@@ -1315,10 +1319,7 @@ while len(edges) < 5:
 		if not (bx1 > ax1 or bx2 < ax1 or bx1 > bx1 or bx2 < bx2):
 			conflict = True
 			break
-		if x != x2 and abs(x - x2) < 16:
-			conflict = True
-			break
-		if y != y2 and abs(y - y2) < 16:
+		if (x != x2 and abs(x - x2) < min_edge_distance) or (y != y2 and abs(y - y2) < min_edge_distance):
 			conflict = True
 			break
 		distance = distance4(x, y, x2, y2)
@@ -1384,6 +1385,7 @@ matrix_wall          = create_matrix(map_size)
 matrix_wall_parapet  = create_matrix(map_size)
 matrix_wall_merlon   = create_matrix(map_size)
 matrix_tower_wall    = create_matrix(map_size)
+matrix_tower_door    = create_matrix(map_size)
 matrix_tower_window  = create_matrix(map_size)
 matrix_tower_parapet = create_matrix(map_size)
 matrix_tower_merlon  = create_matrix(map_size)
@@ -1413,10 +1415,9 @@ for n in range(len(towers)):
 	t2x = tower2[0]
 	t2y = tower2[1]
 	t2s = tower2[2]
-	door_margin     = 0
-	stairs_margin   = 2
-	stairs_width    = 2
-	stairs_offset   = 2
+	stairs_margin   = 4 # The minimum number of studs of wall on each side of the stairs
+	stairs_width    = 2 # The width of the stairs in studs
+	stairs_offset   = 2 # The number of empty studs at the ground level before the stairs
 	stairs_min_size = base_wall_height + stairs_margin * 2 + stairs_offset
 	t1y1 = t1y - t1s / 2
 	t1y2 = t1y + t1s / 2
@@ -1433,9 +1434,11 @@ for n in range(len(towers)):
 		wy2 = t1y + wall_thickness / 2
 		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
 		draw_wall(matrix_wall_parapet, wx1, wy1, wx2, wy1)
+		draw_cell(matrix_tower_door, t1x2 - 2, wy1, t1x2 - 1, wy2 + 1, Cell.DOOR)
+		draw_cell(matrix_tower_door, t2x1, wy1, t2x1 + 1, wy2 + 1, Cell.DOOR)
 		if abs(wx1 - wx2) >= stairs_min_size:
 			for n in range(base_wall_height):
-				draw_cell(matrices_stairs[n], wx1, wy2, wx1 + stairs_margin + stairs_offset + n, wy2 - stairs_width + 1, Cell.STAIRS)
+				draw_cell(matrices_stairs[n], wx1 + stairs_margin, wy2, wx1 + stairs_margin + stairs_offset + n - 1, wy2 - stairs_width + 1, Cell.STAIRS)
 	if t1x > t2x and abs(t1y - t2y) < 4:
 		wx1 = t1x1 - 1
 		wx2 = t2x2
@@ -1443,9 +1446,11 @@ for n in range(len(towers)):
 		wy2 = t1y + wall_thickness / 2
 		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
 		draw_wall(matrix_wall_parapet, wx1, wy2, wx2, wy2)
+		draw_cell(matrix_tower_door, t2x2 - 2, wy1 - 1, t2x2 - 1, wy2, Cell.DOOR)
+		draw_cell(matrix_tower_door, t1x1, wy1 - 1, t1x1 + 1, wy2, Cell.DOOR)
 		if abs(wx1 - wx2) >= stairs_min_size:
 			for n in range(base_wall_height):
-				draw_cell(matrices_stairs[n], wx1 - stairs_margin, wy1, wx1 - stairs_margin - stairs_offset - n, wy1 + stairs_width - 1, Cell.STAIRS)
+				draw_cell(matrices_stairs[n], wx1 - stairs_margin, wy1, wx1 - stairs_margin - stairs_offset - n + 1, wy1 + stairs_width - 1, Cell.STAIRS)
 	if abs(t1x - t2x) < 4 and t1y < t2y:
 		wx1 = t1x - wall_thickness / 2
 		wx2 = t1x + wall_thickness / 2
@@ -1453,9 +1458,11 @@ for n in range(len(towers)):
 		wy2 = t2y1 - 1
 		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
 		draw_wall(matrix_wall_parapet, wx2, wy1, wx2, wy2)
+		draw_cell(matrix_tower_door, wx1 - 1, t1y2 - 2, wx2, t1y2 - 1, Cell.DOOR)
+		draw_cell(matrix_tower_door, wx1 - 1, t2y1, wx2, t2y1 + 1, Cell.DOOR)
 		if abs(wy1 - wy2) >= stairs_min_size:
 			for n in range(base_wall_height):
-				draw_cell(matrices_stairs[n], wx1, wy1 + stairs_margin, wx1 + stairs_width - 1, wy1 + stairs_margin + stairs_offset + n, Cell.STAIRS)
+				draw_cell(matrices_stairs[n], wx1, wy1 + stairs_margin, wx1 + stairs_width - 1, wy1 + stairs_margin + stairs_offset + n - 1, Cell.STAIRS)
 	if abs(t1x - t2x) < 4 and t1y > t2y:
 		wx1 = t1x - wall_thickness / 2
 		wx2 = t1x + wall_thickness / 2
@@ -1463,9 +1470,11 @@ for n in range(len(towers)):
 		wy2 = t2y2
 		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
 		draw_wall(matrix_wall_parapet, wx1, wy1, wx1, wy2)
+		draw_cell(matrix_tower_door, wx1, t2y2 - 2, wx2 + 1, t2y2 - 1, Cell.DOOR)
+		draw_cell(matrix_tower_door, wx1, t1y1, wx2 + 1, t1y1 + 1, Cell.DOOR)
 		if abs(wy1 - wy2) >= stairs_min_size:
 			for n in range(base_wall_height):
-				draw_cell(matrices_stairs[n], wx2, wy1 - stairs_margin, wx2 - stairs_width + 1, wy1 - stairs_margin - stairs_offset - n, Cell.STAIRS)
+				draw_cell(matrices_stairs[n], wx2, wy1 - stairs_margin, wx2 - stairs_width + 1, wy1 - stairs_margin - stairs_offset - n + 1, Cell.STAIRS)
 
 draw_wall_merlon(matrix_wall_merlon, matrix_wall_parapet)
 
@@ -1473,12 +1482,14 @@ matrix_base = combine_matrix(map_size, matrix_wall, matrix_tower_wall)
 
 for n in range(base_wall_height):
 	matrixes.append(combine_matrix(map_size, matrix_base, matrices_stairs[n]))
-#for n in range(2):
-#	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_wall_parapet))
-#for n in range(1):
-#	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_wall_merlon))
-#for n in range(2):
-#	matrixes.append(matrix_tower_wall)
+for n in range(2):
+	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_wall_parapet, matrix_tower_door))
+for n in range(1):
+	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_wall_merlon, matrix_tower_door))
+for n in range(3):
+	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_tower_door))
+for n in range(2):
+	matrixes.append(matrix_tower_wall)
 #for n in range(window_height):
 #	matrixes.append(matrix_tower_window)
 #for n in range(2):
