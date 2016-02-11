@@ -322,6 +322,9 @@ def fill_merlons_y(f, x, y1, y2, h, color):
 		emit_part(f, color_black, part_brick_1x1, x, y2, h+3, 0)
 	pass
 
+def stone_color():
+	return color_light_bley if random.random() > 0.15 else color_dark_bley
+
 def export(file, size, river, riverbed, matrixes, soldiers):
 	f = open(file, 'w')
 	export_header(f, file)
@@ -406,21 +409,13 @@ def export(file, size, river, riverbed, matrixes, soldiers):
 	def check_bottom_corner(matrix, prev, x, y):
 		filter = matrix[x][y]
 		return matrix[x - 1][y] != filter and matrix[x][y - 1] != filter and (prev is None or prev[x][y] != filter)
-		
-	#emit_part(f, color_lime, part_arch_1x3x2, 0, 0, 0, 0)
-	#emit_part(f, color_lime, part_arch_1x3x2, 0, 1, 0, 1)
-	#emit_part(f, color_lime, part_arch_1x3x2, 0, 4, 0, 2)
-	#emit_part(f, color_lime, part_arch_1x3x2, 0, 7, 0, 3)
-	#emit_part(f, color_lime, part_tile_1x8, 0, 0, 0, 0)
-	#emit_part(f, color_lime, part_tile_1x8, 0, 1, 0, 1)
-	
+
 	matrix_wall_list = []
 	for matrix in matrixes:
 		matrix_wall_list.append(create_matrix(size))
 	for layer in range(len(matrixes)):
 		matrix = matrixes[layer]
 		emit_step(f, 'layer %s' % layer)
-		color = color_light_bley
 		prev = matrixes[layer - 1] if layer > 0 else None
 		next = matrixes[layer + 1] if layer < len(matrixes) - 1 else None
 		matrix_wall = matrix_wall_list[layer]
@@ -442,19 +437,19 @@ def export(file, size, river, riverbed, matrixes, soldiers):
 						top = layer + layers - 1
 						if cell == Cell.WINDOW:
 							if max_size == 3 and min_size == 2:
-								emit_part(f, color, part_tile_1x2, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, 1 - rotated)
+								emit_part(f, stone_color(), part_tile_1x2, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, 1 - rotated)
 							if max_size == 4 and min_size == 2:
-								emit_part(f, color, part_tile_2x2, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
+								emit_part(f, stone_color(), part_tile_2x2, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
 							if max_size == 6 and min_size == 2:
-								emit_part(f, color, part_tile_2x4, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
+								emit_part(f, stone_color(), part_tile_2x4, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
 							if max_size == 8 and min_size == 2:
-								emit_part(f, color, part_tile_1x6, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
-								emit_part(f, color, part_tile_1x6, x + 1, y + 1, base * 3, rotated)
+								emit_part(f, stone_color(), part_tile_1x6, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
+								emit_part(f, stone_color(), part_tile_1x6, x + 1, y + 1, base * 3, rotated)
 							if max_size == 10 and min_size == 2:
-								emit_part(f, color, part_tile_1x8, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
-								emit_part(f, color, part_tile_1x8, x + 1, y + 1, base * 3, rotated)
+								emit_part(f, stone_color(), part_tile_1x8, x + (0 if orientation else 1), y + (1 if orientation else 0), base * 3, rotated)
+								emit_part(f, stone_color(), part_tile_1x8, x + 1, y + 1, base * 3, rotated)
 						if max_size == 10 and min_size == 2:
-							emit_part(f, color, part_plate_4x2, x + (0 if orientation else 3), y + (3 if orientation else 0), top * 3 - 1, rotated + 2)
+							emit_part(f, stone_color(), part_plate_4x2, x + (0 if orientation else 3), y + (3 if orientation else 0), top * 3 - 1, rotated + 2)
 						for d in range(min_size):
 							sx = x + (d if orientation else 0)
 							sy = y + (0 if orientation else d)
@@ -464,18 +459,18 @@ def export(file, size, river, riverbed, matrixes, soldiers):
 								matrix_wall_list[z][sx][sy] = True
 								matrix_wall_list[z][fx][fy] = True
 							if max_size >= 8:
-								emit_part(f, color, part_arch_1x3x2, sx, sy, (top - 2) * 3, rotated)
-								emit_part(f, color, part_arch_1x3x2, fx, fy, (top - 2) * 3, rotated + 2)
+								emit_part(f, stone_color(), part_arch_1x3x2, sx, sy, (top - 2) * 3, rotated)
+								emit_part(f, stone_color(), part_arch_1x3x2, fx, fy, (top - 2) * 3, rotated + 2)
 								matrix_wall_list[top - 1][sx][sy] = True
 								matrix_wall_list[top - 1][fx][fy] = True
 							elif max_size == 8:
-								emit_part(f, color, part_arch_1x8x2, sx, sy, (top - 2) * 3, rotated)
+								emit_part(f, stone_color(), part_arch_1x8x2, sx, sy, (top - 2) * 3, rotated)
 							elif max_size == 6:
-								emit_part(f, color, part_arch_1x6, sx, sy, (top - 1) * 3, rotated)
+								emit_part(f, stone_color(), part_arch_1x6, sx, sy, (top - 1) * 3, rotated)
 							elif max_size == 4:
-								emit_part(f, color, part_arch_1x4, sx, sy, (top - 1) * 3, rotated)
+								emit_part(f, stone_color(), part_arch_1x4, sx, sy, (top - 1) * 3, rotated)
 							elif max_size == 3:
-								emit_part(f, color, part_arch_1x3, sx, sy, (top - 1) * 3, rotated)
+								emit_part(f, stone_color(), part_arch_1x3, sx, sy, (top - 1) * 3, rotated)
 							else:
 								emit_part(f, color_blue, part_brick_1x1, sx, sy, (top - 1) * 3, rotated)
 		
@@ -508,98 +503,98 @@ def export(file, size, river, riverbed, matrixes, soldiers):
 			for x in range(size):
 				if matrix_wall[x][y] and (x % 4 == offset) and (y % 2 == 0):
 					if check_matrix(matrix_wall, x, y, 4, 2):
-						emit_part(f, color, part_brick_4x2, x, y, layer * 3, 0)
+						emit_part(f, stone_color(), part_brick_4x2, x, y, layer * 3, 0)
 						fill_matrix(matrix_wall, x, y, 4, 2, False)
 		# Y-aligned 4x2
 		for y in range(size):
 			for x in range(size):
 				if matrix_wall[x][y] and (x % 2 == 0) and (y % 4 == offset):
 					if check_matrix(matrix_wall, x, y, 2, 4):
-						emit_part(f, color, part_brick_4x2, x, y, layer * 3, 1)
+						emit_part(f, stone_color(), part_brick_4x2, x, y, layer * 3, 1)
 						fill_matrix(matrix_wall, x, y, 2, 4, False)
 		# X-aligned 2x3
 		for y in range(size):
 			for x in range(size):
 				if matrix_wall[x][y]:
 					if check_matrix(matrix_wall, x, y, 3, 2):
-						emit_part(f, color, part_brick_2x3, x, y, layer * 3, 0)
+						emit_part(f, stone_color(), part_brick_2x3, x, y, layer * 3, 0)
 						fill_matrix(matrix_wall, x, y, 3, 2, False)
 		# Y-aligned 2x3
 		for y in range(size):
 			for x in range(size):
 				if matrix_wall[x][y]:
 					if check_matrix(matrix_wall, x, y, 2, 3):
-						emit_part(f, color, part_brick_2x3, x, y, layer * 3, 1)
+						emit_part(f, stone_color(), part_brick_2x3, x, y, layer * 3, 1)
 						fill_matrix(matrix_wall, x, y, 2, 3, False)
 		# X-aligned 4x1
 		for y in range(size):
 			for x in range(size):
 				if matrix_wall[x][y] and (x % 4 == offset):
 					if check_matrix(matrix_wall, x, y, 4, 1):
-						emit_part(f, color, part_brick_4x1, x, y, layer * 3, 0)
+						emit_part(f, stone_color(), part_brick_4x1, x, y, layer * 3, 0)
 						fill_matrix(matrix_wall, x, y, 4, 1, False)
 		# Y-aligned 4x1
 		for y in range(size):
 			for x in range(size):
 				if matrix_wall[x][y] and (y % 4 == offset):
 					if check_matrix(matrix_wall, x, y, 1, 4):
-						emit_part(f, color, part_brick_4x1, x, y, layer * 3, 1)
+						emit_part(f, stone_color(), part_brick_4x1, x, y, layer * 3, 1)
 						fill_matrix(matrix_wall, x, y, 1, 4, False)
 		# X-aligned 3x1
 		for y in range(size):
 			for x in range(size):
 				if matrix_wall[x][y]:
 					if check_matrix(matrix_wall, x, y, 3, 1):
-						emit_part(f, color, part_brick_3x1, x, y, layer * 3, 0)
+						emit_part(f, stone_color(), part_brick_3x1, x, y, layer * 3, 0)
 						fill_matrix(matrix_wall, x, y, 3, 1, False)
 		# Y-aligned 3x1
 		for y in range(size):
 			for x in range(size):
 				if matrix_wall[x][y]:
 					if check_matrix(matrix_wall, x, y, 1, 3):
-						emit_part(f, color, part_brick_3x1, x, y, layer * 3, 1)
+						emit_part(f, stone_color(), part_brick_3x1, x, y, layer * 3, 1)
 						fill_matrix(matrix_wall, x, y, 1, 3, False)
 		# 2x2 Corner
 		for y in range(size - 1):
 			for x in range(size - 1):
 				if matrix_wall[x][y] and matrix_wall[x + 1][y] and matrix_wall[x][y + 1] and not matrix_wall[x + 1][y + 1]:
-					emit_part(f, color, part_corner_2x2, x, y, layer * 3, 0)
+					emit_part(f, stone_color(), part_corner_2x2, x, y, layer * 3, 0)
 					fill_matrix(matrix_wall, x, y, 2, 2, False)
 				if matrix_wall[x][y] and matrix_wall[x + 1][y] and matrix_wall[x + 1][y + 1] and not matrix_wall[x][y + 1]:
-					emit_part(f, color, part_corner_2x2, x, y, layer * 3, 1)
+					emit_part(f, stone_color(), part_corner_2x2, x, y, layer * 3, 1)
 					fill_matrix(matrix_wall, x, y, 2, 2, False)
 				if matrix_wall[x][y] and matrix_wall[x][y + 1] and matrix_wall[x + 1][y + 1] and not matrix_wall[x + 1][y]:
-					emit_part(f, color, part_corner_2x2, x, y, layer * 3, 3)
+					emit_part(f, stone_color(), part_corner_2x2, x, y, layer * 3, 3)
 					fill_matrix(matrix_wall, x, y, 2, 2, False)
 				if not matrix_wall[x][y] and matrix_wall[x][y + 1] and matrix_wall[x + 1][y + 1] and matrix_wall[x + 1][y]:
-					emit_part(f, color, part_corner_2x2, x, y, layer * 3, 2)
+					emit_part(f, stone_color(), part_corner_2x2, x, y, layer * 3, 2)
 					fill_matrix(matrix_wall, x, y, 2, 2, False)
 		# 2x2
 		for y in range(size):
 			for x in range(size):
 				if matrix_wall[x][y]:
 					if check_matrix(matrix_wall, x, y, 2, 2):
-						emit_part(f, color, part_brick_2x2, x, y, layer * 3, 0)
+						emit_part(f, stone_color(), part_brick_2x2, x, y, layer * 3, 0)
 						fill_matrix(matrix_wall, x, y, 2, 2, False)
 		# X-aligned 2x1
 		for y in range(size):
 			for x in range(size):
 				if matrix_wall[x][y]:
 					if check_matrix(matrix_wall, x, y, 2, 1):
-						emit_part(f, color, part_brick_2x1, x, y, layer * 3, 0)
+						emit_part(f, stone_color(), part_brick_2x1, x, y, layer * 3, 0)
 						fill_matrix(matrix_wall, x, y, 2, 1, False)
 		# Y-aligned 2x1
 		for y in range(size):
 			for x in range(size):
 				if matrix_wall[x][y]:
 					if check_matrix(matrix_wall, x, y, 1, 2):
-						emit_part(f, color, part_brick_2x1, x, y, layer * 3, 1)
+						emit_part(f, stone_color(), part_brick_2x1, x, y, layer * 3, 1)
 						fill_matrix(matrix_wall, x, y, 1, 2, False)
 		# 1x1
 		for y in range(size):
 			for x in range(size):
 				if matrix_wall[x][y]:
-					emit_part(f, color, part_brick_1x1, x, y, layer * 3, 0)
+					emit_part(f, stone_color(), part_brick_1x1, x, y, layer * 3, 0)
 
 	emit_step(f, 'minifigures')
 	for soldier in soldiers:
@@ -996,7 +991,7 @@ map_size = 32 * 4
 
 margin                 = 4
 min_tower_size         = 12
-max_tower_size         = 12
+max_tower_size         = 16
 thickness_wall         = 5
 height_window          = 4
 height_base_wall       = 12
@@ -1129,8 +1124,11 @@ for tower in towers:
 	draw_tower_parapet(matrix_tower_parapet, x1, y1, s)
 	draw_tower_merlon(matrix_tower_merlon, x1, y1, s)
 
-portcullis_tower_index1 = -1
-portcullis_tower_index2 = 0
+min_tower_x = min(map(lambda t: t[0], towers))
+leftmost_towers = filter(lambda t: t[0] == min_tower_x, towers)
+
+portcullis_tower_index1 = towers.index(leftmost_towers[0])
+portcullis_tower_index2 = (portcullis_tower_index1 + 1) % len(towers)
 portcullis_x = (towers[portcullis_tower_index1][0])
 portcullis_y = (towers[portcullis_tower_index1][1] + towers[portcullis_tower_index2][1]) / 2
 for n in range(-4, +5):
@@ -1257,7 +1255,5 @@ for n in range(height_parapet):
 	matrixes.append(matrix_tower_parapet)
 for n in range(height_merlon):
 	matrixes.append(matrix_tower_merlon)
-
-#matrixes = [matrix_tower_wall, matrix_wall]
 
 export('castle.ldr', map_size, grid_river, grid_riverbed, matrixes, soldiers)
