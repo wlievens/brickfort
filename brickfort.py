@@ -306,7 +306,7 @@ def fill_merlons_y(f, x, y1, y2, h, color):
 		emit_part(f, color_black, part_brick_1x1, x, y2, h+3, 0)
 	pass
 
-def export(file, size, river, riverbed, castle_outline, matrixes):
+def export(file, size, river, riverbed, castle_outline, matrixes, soldiers):
 	f = open(file, 'w')
 	export_header(f, file)
 	# Generate background plates
@@ -904,13 +904,26 @@ def export(file, size, river, riverbed, castle_outline, matrixes):
 					emit_part(f, color, part_corner_2x2, px1, py1, h3, 2)
 
 	emit_step(f, 'minifigures')
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 30 * SCALE))
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 35 * SCALE))
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 40 * SCALE))
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 45 * SCALE))
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 50 * SCALE))
-	f.write('1 71 %s -362 %s 0 0 1 0 1 0 -1 0 0 dude.ldr\n' % (39 * SCALE + SCALE / 2, 69 * SCALE))
-
+	for soldier in soldiers:
+		pz = soldier[2] * -SCALE_UP - 72
+		py = soldier[1] * SCALE# - 180
+		px = soldier[0] * SCALE# - 8
+		rxy = soldier[3]
+		if rxy == 0:
+			px = px + 220
+			py = py - 9
+		if rxy == 1:
+			px = px + 28
+			py = py + 220
+		if rxy == 2:
+			px = px - 180
+			py = py + 28
+		if rxy == 3:
+			px = px - 9
+			py = py - 180
+		rxy = rotate_table_xy[rxy]
+		f.write('1 71 %s %s %s %s %s %s %s %s %s %s %s %s dude.ldr\n' % (px, pz, py, rxy[0], rxy[1], rxy[2], rxy[3], rxy[4], rxy[5], rxy[6], rxy[7], rxy[8]))
+	
 	f.write('0\n')
 
 	
@@ -1490,6 +1503,10 @@ for n in range(len(towers)):
 
 draw_wall_merlon(matrix_wall_merlon, matrix_wall_parapet)
 
+soldiers = []
+for n in range(4):
+	soldiers.append( (6, 4 * n, 1, n) )
+
 matrix_base = combine_matrix(map_size, matrix_wall, matrix_tower_wall)
 
 for n in range(portcullis_height):
@@ -1519,4 +1536,4 @@ for n in range(1):
 
 #matrixes = [matrix_tower_wall, matrix_wall]
 
-export('castle.ldr', map_size, grid_river, grid_riverbed, [], matrixes)
+export('castle.ldr', map_size, grid_river, grid_riverbed, [], matrixes, soldiers)
