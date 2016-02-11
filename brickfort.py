@@ -135,6 +135,7 @@ class Cell:
 	DOOR       = 3
 	PORTCULLIS = 4
 	STAIRS     = 5
+	HOLE       = 999
 
 def create_matrix(size):
 	return [[False for x in range(size)] for x in range(size)] 
@@ -1275,7 +1276,7 @@ def prel(x, a, b):
 	
 map_size = 32 * 4
 
-random.seed(15567)
+random.seed(5567)
 
 grid_river = generate_river(map_size)
 grid_riverbed = generate_riverbed(map_size, grid_river)
@@ -1389,6 +1390,7 @@ matrix_tower_door    = create_matrix(map_size)
 matrix_tower_window  = create_matrix(map_size)
 matrix_tower_parapet = create_matrix(map_size)
 matrix_tower_merlon  = create_matrix(map_size)
+matrix_portcullis    = create_matrix(map_size)
 
 base_wall_height = 12
 matrices_stairs = []
@@ -1405,6 +1407,16 @@ for tower in towers:
 	draw_tower_window(matrix_tower_window, x1, y1, s)
 	draw_tower_parapet(matrix_tower_parapet, x1, y1, s)
 	draw_tower_merlon(matrix_tower_merlon, x1, y1, s)
+
+portcullis_tower_index1 = -1
+portcullis_tower_index2 = 0
+portcullis_x = (towers[portcullis_tower_index1][0])
+portcullis_y = (towers[portcullis_tower_index1][1] + towers[portcullis_tower_index2][1]) / 2
+for n in range(-4, +5):
+	matrix_portcullis[portcullis_x - wall_thickness / 2][portcullis_y + n] = Cell.PORTCULLIS
+	for k in range(-wall_thickness / 2 + 2, wall_thickness):
+		matrix_portcullis[portcullis_x + k][portcullis_y + n] = Cell.HOLE
+portcullis_height = 11
 
 for n in range(len(towers)):
 	tower1 = towers[n]
@@ -1480,7 +1492,9 @@ draw_wall_merlon(matrix_wall_merlon, matrix_wall_parapet)
 
 matrix_base = combine_matrix(map_size, matrix_wall, matrix_tower_wall)
 
-for n in range(base_wall_height):
+for n in range(portcullis_height):
+	matrixes.append(combine_matrix(map_size, matrix_base, matrices_stairs[n], matrix_portcullis))
+for n in range(base_wall_height - portcullis_height):
 	matrixes.append(combine_matrix(map_size, matrix_base, matrices_stairs[n]))
 for n in range(2):
 	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_wall_parapet, matrix_tower_door))
@@ -1490,138 +1504,19 @@ for n in range(3):
 	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_tower_door))
 for n in range(2):
 	matrixes.append(matrix_tower_wall)
-#for n in range(window_height):
-#	matrixes.append(matrix_tower_window)
-#for n in range(2):
-#	matrixes.append(matrix_tower_wall)
-#for n in range(window_height):
-#	matrixes.append(matrix_tower_window)
-#for n in range(1):
-#	matrixes.append(matrix_tower_wall)
-#for n in range(2):
-#	matrixes.append(matrix_tower_parapet)
-#for n in range(1):
-#	matrixes.append(matrix_tower_merlon)
+for n in range(window_height):
+	matrixes.append(matrix_tower_window)
+for n in range(2):
+	matrixes.append(matrix_tower_wall)
+for n in range(window_height):
+	matrixes.append(matrix_tower_window)
+for n in range(1):
+	matrixes.append(matrix_tower_wall)
+for n in range(2):
+	matrixes.append(matrix_tower_parapet)
+for n in range(1):
+	matrixes.append(matrix_tower_merlon)
 
 #matrixes = [matrix_tower_wall, matrix_wall]
-
-#matrix_tower_wall = create_matrix(map_size)
-#for n in range(len(towers)):
-#	tower = towers[n]
-#	x = tower[0]
-#	y = tower[1]
-#	for k in range(n + 1):
-#		matrix_tower_wall[x + k][y] = True
-#matrixes = [matrix_tower_wall]
-
-
-#x1 = mod2(random.randint(min_x_a, max_x_a))
-#y1 = mod2(random.randint(min_y_a, max_y_a))
-#x2 = mod2(random.randint(min_x_b, max_x_b))
-#y2 = mod2(random.randint(min_y_a, max_y_a))
-#x3 = mod2(random.randint(min_x_b, max_x_b))
-#y3 = mod2(random.randint(min_y_b, max_y_b))
-#x4 = mod2(random.randint(min_x_a, max_x_a))
-#y4 = mod2(random.randint(min_y_b, max_y_b))
-#
-#s1 = mod2(random.randint(min_tower_size, max_tower_size))
-#s2 = mod2(random.randint(min_tower_size, max_tower_size))
-#s3 = mod2(random.randint(min_tower_size, max_tower_size))
-#s4 = mod2(random.randint(min_tower_size, max_tower_size))
-#
-#
-#matrix_ground = create_matrix(map_size)
-#
-#draw_tower(matrix_ground, x1, y1, s1)
-#draw_tower(matrix_ground, x2, y2, s2)
-#draw_tower(matrix_ground, x3, y3, s3)
-#draw_tower(matrix_ground, x4, y4, s4)
-#
-#yw1 = mod2((min(y1 + s1, y2 + s2) + max(y1, y2)) / 2)
-#xw2 = mod2((min(x2 + s2, x3 + s3) + max(x2, x3)) / 2)
-#yw3 = mod2((min(y3 + s3, y4 + s4) + max(y3, y4)) / 2)
-#xw4 = mod2((min(x4 + s4, x1 + s1) + max(x4, x1)) / 2)
-#
-#draw_wall(matrix_ground, x1 + s1, yw1, x2, yw1 + wall_thickness - 1)
-#draw_wall(matrix_ground, xw2, y2 + s2, xw2 + wall_thickness - 1, y3)
-#draw_wall(matrix_ground, x3, yw3, x4 + s4 - 2, yw3 + wall_thickness - 1)
-#
-#ym1 = (y4 - y1) / 2 + 5
-#ym2 = (y4 - y1) / 2 - 5
-#draw_wall(matrix_ground, xw4, y4, xw4 + wall_thickness - 1, ym1)
-#draw_wall(matrix_ground, xw4, ym2, xw4 + wall_thickness - 1, y1 + s1 - 2)
-#draw_cell(matrix_ground, xw4, ym2 + 1, xw4, ym1 - 1, Cell.PORTCULLIS)
-#
-#matrix_wall = copy_matrix(map_size, matrix_ground)
-#draw_wall(matrix_wall, xw4, y4, xw4 + wall_thickness - 1, y1 + s1 - 2)
-#
-#matrix_wall_parapet = create_matrix(map_size)
-#draw_wall(matrix_wall_parapet, x1 + s1, yw1, x2 - 1, yw1)
-#draw_wall(matrix_wall_parapet, xw2 + wall_thickness - 1, y2 + s2, xw2 + wall_thickness - 1, y3 - 1)
-#draw_wall(matrix_wall_parapet, x3 - 1, yw3 + wall_thickness - 1, x4 + s4, yw3 + wall_thickness - 1)
-#draw_wall(matrix_wall_parapet, xw4, y4 - 1, xw4, y1 + s1)
-#
-#matrix_wall_merlon = create_matrix(map_size)
-#draw_wall_merlon(matrix_wall_merlon, matrix_wall_parapet)
-#
-#matrix_wall_tower = create_matrix(map_size)
-#draw_tower(matrix_wall_tower, x1, y1, s1)
-#draw_tower(matrix_wall_tower, x2, y2, s2)
-#draw_tower(matrix_wall_tower, x3, y3, s3)
-#draw_tower(matrix_wall_tower, x4, y4, s4)
-#
-#matrix_wall_tower_door = copy_matrix(map_size, matrix_wall_tower)
-#for n in range(wall_thickness):
-#	draw_cell(matrix_wall_tower_door, x1 + s1 - 2, yw1, x1 + s1 - 1, yw1 + wall_thickness, Cell.DOOR)
-#	draw_cell(matrix_wall_tower_door, xw4, y1 + s1 - 2, xw4 + wall_thickness, y1 + s1 - 1, Cell.DOOR)
-#	draw_cell(matrix_wall_tower_door, x2, yw1, x2 + 1, yw1 + wall_thickness, Cell.DOOR)
-#	draw_cell(matrix_wall_tower_door, xw2 - 1, y2 + s2 - 2, xw2 + wall_thickness - 1, y2 + s2 - 1, Cell.DOOR)
-#	draw_cell(matrix_wall_tower_door, xw2 - 1, y3, xw2 + wall_thickness - 1, y3 + 1, Cell.DOOR)
-#	draw_cell(matrix_wall_tower_door, x3, yw3 - 1, x3 + 1, yw3 + wall_thickness - 1, Cell.DOOR)
-#	draw_cell(matrix_wall_tower_door, x4 + s4 - 2, yw3 - 1, x4 + s4 - 1, yw3 + wall_thickness - 1, Cell.DOOR)
-#	draw_cell(matrix_wall_tower_door, xw4, y4, xw4 + wall_thickness, y4 + 1, Cell.DOOR)
-#
-#matrix_wall_tower_window = create_matrix(map_size)
-#draw_tower_window(matrix_wall_tower_window, x1, y1, s1)
-#draw_tower_window(matrix_wall_tower_window, x2, y2, s2)
-#draw_tower_window(matrix_wall_tower_window, x3, y3, s3)
-#draw_tower_window(matrix_wall_tower_window, x4, y4, s4)
-#
-#matrix_wall_tower_parapet = create_matrix(map_size)
-#draw_tower_outline(matrix_wall_tower_parapet, x1, y1, s1)
-#draw_tower_outline(matrix_wall_tower_parapet, x2, y2, s2)
-#draw_tower_outline(matrix_wall_tower_parapet, x3, y3, s3)
-#draw_tower_outline(matrix_wall_tower_parapet, x4, y4, s4)
-#
-#matrix_wall_tower_merlon = create_matrix(map_size)
-#draw_tower_merlon(matrix_wall_tower_merlon, x1, y1, s1)
-#draw_tower_merlon(matrix_wall_tower_merlon, x2, y2, s2)
-#draw_tower_merlon(matrix_wall_tower_merlon, x3, y3, s3)
-#draw_tower_merlon(matrix_wall_tower_merlon, x4, y4, s4)
-#
-#for n in range(11):
-#	matrixes.append(matrix_ground)
-#for n in range(1):
-#	matrixes.append(matrix_wall)
-#for n in range(2):
-#	matrixes.append(combine_matrix(map_size, matrix_wall_parapet, matrix_wall_tower_door))
-#for n in range(1):
-#	matrixes.append(combine_matrix(map_size, matrix_wall_merlon, matrix_wall_tower_door))
-#for n in range(3):
-#	matrixes.append(matrix_wall_tower_door)
-#for n in range(2):
-#	matrixes.append(matrix_wall_tower)
-#for n in range(3):
-#	matrixes.append(matrix_wall_tower_window)
-#for n in range(2):
-#	matrixes.append(matrix_wall_tower)
-#for n in range(3):
-#	matrixes.append(matrix_wall_tower_window)
-#for n in range(1):
-#	matrixes.append(matrix_wall_tower)
-#for n in range(2):
-#	matrixes.append(matrix_wall_tower_parapet)
-#for n in range(1):
-#	matrixes.append(matrix_wall_tower_merlon)
 
 export('castle.ldr', map_size, grid_river, grid_riverbed, [], matrixes)
