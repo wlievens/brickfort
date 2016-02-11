@@ -994,18 +994,20 @@ random.seed(653167)
 
 map_size = 32 * 4
 
-margin                = 4
-min_tower_size        = 12
-max_tower_size        = 12
-thickness_wall        = 5
-height_window         = 4
-height_base_wall      = 12
-height_parapet        = 2
-height_tower_floor    = 1
-height_merlon         = 1
-height_door           = 6
-height_window_spacing = 2
-tower_window_layers   = 2
+margin                 = 4
+min_tower_size         = 12
+max_tower_size         = 12
+thickness_wall         = 5
+height_window          = 4
+height_base_wall       = 12
+height_portcullis      = 11
+height_parapet         = 2
+height_tower_floor     = 1
+height_merlon          = 1
+height_door            = 6
+height_window_spacing  = 2
+tower_window_layers    = 2
+height_tower_top_floor = height_base_wall + height_door + tower_window_layers * (height_window + height_window_spacing) + height_tower_floor
 
 grid_river = generate_river(map_size)
 grid_riverbed = generate_riverbed(map_size, grid_river)
@@ -1135,7 +1137,6 @@ for n in range(-4, +5):
 	matrix_portcullis[portcullis_x - thickness_wall / 2][portcullis_y + n] = Cell.PORTCULLIS
 	for k in range(-thickness_wall / 2 + 2, thickness_wall):
 		matrix_portcullis[portcullis_x + k][portcullis_y + n] = Cell.HOLE
-portcullis_height = 11
 
 for n in range(len(towers)):
 	tower1 = towers[n]
@@ -1211,7 +1212,7 @@ draw_wall_merlon(matrix_wall_merlon, matrix_wall_parapet)
 
 def place_soldiers(matrix, z, count):
 	map_size = len(matrix)
-	matrix_wall_inner = erode_matrix(map_size, erode_matrix(map_size, matrix_wall))
+	matrix_wall_inner = erode_matrix(map_size, erode_matrix(map_size, matrix))
 	list = []
 	for y in range(map_size):
 		for x in range(map_size):
@@ -1229,13 +1230,13 @@ def place_soldiers(matrix, z, count):
 		soldiers.append( (x, y, z * 3, facing) )
 	return soldiers
 
-soldiers = place_soldiers(matrix_wall, height_base_wall, 25) + place_soldiers(matrix_tower_floor, height_tower_floor, 10)
+soldiers = place_soldiers(matrix_wall, height_base_wall, 25) + place_soldiers(matrix_tower_floor, height_tower_top_floor, 10)
 
 matrix_base = combine_matrix(map_size, matrix_wall, matrix_tower_wall)
 
-for n in range(portcullis_height):
+for n in range(height_portcullis):
 	matrixes.append(combine_matrix(map_size, matrix_base, matrices_stairs[n], matrix_portcullis))
-for n in range(height_base_wall - portcullis_height):
+for n in range(height_base_wall - height_portcullis):
 	matrixes.append(combine_matrix(map_size, matrix_base, matrices_stairs[n], matrix_tower_floor))
 for n in range(height_parapet):
 	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_wall_parapet, matrix_tower_door))
