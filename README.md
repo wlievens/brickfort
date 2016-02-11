@@ -4,7 +4,11 @@
 
 *BrickFort* is an attempt at implementing a "Procedural Castle" as proposed by the Second Monthly Challenge on [/r/proceduralgeneration](https://www.reddit.com/r/proceduralgeneration)
 
-https://www.reddit.com/r/proceduralgeneration/comments/3zy53l/monthly_challenge_2_jan_2016_procedural_castle/
+**Challenge:** https://www.reddit.com/r/proceduralgeneration/comments/3zy53l/monthly_challenge_2_jan_2016_procedural_castle
+
+**WIP:** https://www.reddit.com/r/proceduralgeneration/comments/3zy53l/monthly_challenge_2_jan_2016_procedural_castle/cyqfw4r
+
+**Submission:** https://www.reddit.com/r/proceduralgeneration/comments/45ay7o/brickfort_my_procedural_lego_castle
 
 There will be no interactive demo this time, because the system is not web-based. It generates an **LDR** file which you can open in the **LDRaw** tool suite.
 
