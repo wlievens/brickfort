@@ -146,6 +146,22 @@ def copy_matrix(size, matrix):
 		for x in range(size):
 			result[x][y] = matrix[x][y]
 	return result
+	
+def check_xy(x, y, map_size):
+	return x >= 0 and y >= 0 and x < map_size and y < map_size
+
+def erode_matrix(size, matrix):
+	result = create_matrix(size)
+	for y in range(size):
+		for x in range(size):
+			count = 0
+			for ny in range(y - 1, y + 2):
+				for nx in range(x - 1, x + 2):
+					if check_xy(nx, ny, map_size) and matrix[nx][ny]:
+						count = count + 1
+			if count == 9:
+				result[x][y] = True
+	return result
 
 def combine_matrix(size, *list):
 	result = create_matrix(size)
@@ -470,9 +486,6 @@ def export(file, size, river, riverbed, castle_outline, matrixes, soldiers):
 						if width == 1 and height == 9 and layers == 11:
 							emit_part(f, color_dark_bley, part_portcullis, x, y, layer * 3 - part_sizes[part_portcullis][2] + 2, 1)
 	
-	def check_xy(x, y, map_size):
-		return x >= 0 and y >= 0 and x < map_size and y < map_size
-	
 	def check_matrix(matrix, x, y, w, h):
 		for bx in range(w):
 			for by in range(h):
@@ -654,7 +667,7 @@ def export(file, size, river, riverbed, castle_outline, matrixes, soldiers):
 					emit_part(f, color, part_brick_4x2, x - offset, y, h3, 0)
 
 	emit_step(f, 'parapet')
-	parapet_height = 2
+	height_parapet = 2
 	for n in range(count):
 		concave0 = concave_angles[(n + 0) % count]
 		concave1 = concave_angles[(n + 1) % count]
@@ -667,7 +680,7 @@ def export(file, size, river, riverbed, castle_outline, matrixes, soldiers):
 		# check towers
 		if p1[2] or p2[2]:
 			pass
-		for h in range(parapet_height):
+		for h in range(height_parapet):
 			h3 = (wall_height + h) * 3
 			odd = (h % 2) == 1
 			offset = 2 if odd else 0
@@ -788,7 +801,7 @@ def export(file, size, river, riverbed, castle_outline, matrixes, soldiers):
 			py2 = p2[1]
 			print 'tower'
 			for h in range(tower_height):
-				emit_part(f, color, part_brick_1x1, px1, py1, (wall_height + parapet_height + h) * 3, 0)
+				emit_part(f, color, part_brick_1x1, px1, py1, (wall_height + height_parapet + h) * 3, 0)
 
 	emit_step(f, 'walking planks ' + str(n))
 	plank_width = 4
@@ -851,8 +864,8 @@ def export(file, size, river, riverbed, castle_outline, matrixes, soldiers):
 	emit_part_list(f, wall_height * 3, color_brown, list)
 	
 	emit_step(f, 'merlons')
-	h3 = (wall_height + parapet_height) * 3
-	odd = (wall_height + parapet_height) % 2 == 1
+	h3 = (wall_height + height_parapet) * 3
+	odd = (wall_height + height_parapet) % 2 == 1
 	color = color_light_bley
 	for n in range(count):
 		concave0 = concave_angles[(n + 0) % count]
@@ -1107,6 +1120,11 @@ def draw_tower_wall(matrix, x, y, r):
 		matrix[x + n][y + r - 2] = Cell.WALL
 		matrix[x + n][y + r - 1] = Cell.WALL
 
+def draw_tower_floor(matrix, x, y, r):
+	for nx in range(x, x + r):
+		for ny in range(y, y + r):
+			matrix[nx][ny] = Cell.WALL
+
 def draw_tower_parapet(matrix, x, y, r):
 	for n in range(0, r):
 		matrix[x + n][y] = Cell.WALL
@@ -1286,21 +1304,27 @@ def lerp(t, a, b):
 def prel(x, a, b):
 	return 1.0 * (x - a) / (b - a)
 
-	
+
+random.seed(653167)
+
 map_size = 32 * 4
 
-random.seed(5567)
+margin                = 4
+min_tower_size        = 12
+max_tower_size        = 12
+thickness_wall        = 5
+height_window         = 4
+height_base_wall      = 12
+height_parapet        = 2
+height_merlon         = 1
+height_door           = 6
+height_window_spacing = 2
+tower_window_layers   = 2
 
 grid_river = generate_river(map_size)
 grid_riverbed = generate_riverbed(map_size, grid_river)
 
 offset = find_castle_offset(map_size, grid_river, grid_riverbed)
-
-margin = 4
-min_tower_size = 14
-max_tower_size = 14
-window_height = 4
-wall_thickness = 5
 
 min_x = mod2(offset + margin + max_tower_size / 2)
 max_x = mod2(map_size - margin - max_tower_size / 2)
@@ -1386,12 +1410,7 @@ def make_tower(p):
 	y = rebalance(p[1], s, gen_min_y, gen_max_y, min_y, max_y)
 	return (x, y, s)
 
-print 'tower_centers : ' + str(tower_centers)
-print 'sanitzed      : ' + str(sanitize_path(tower_centers))
-
 towers = map(make_tower, sanitize_path(tower_centers))
-
-print 'towers        : ' + str(towers)
 
 matrixes = []
 
@@ -1399,15 +1418,15 @@ matrix_wall          = create_matrix(map_size)
 matrix_wall_parapet  = create_matrix(map_size)
 matrix_wall_merlon   = create_matrix(map_size)
 matrix_tower_wall    = create_matrix(map_size)
+matrix_tower_floor   = create_matrix(map_size)
 matrix_tower_door    = create_matrix(map_size)
 matrix_tower_window  = create_matrix(map_size)
 matrix_tower_parapet = create_matrix(map_size)
 matrix_tower_merlon  = create_matrix(map_size)
 matrix_portcullis    = create_matrix(map_size)
 
-base_wall_height = 12
 matrices_stairs = []
-for n in range(base_wall_height):
+for n in range(height_base_wall):
 	matrices_stairs.append(create_matrix(map_size))
 
 for tower in towers:
@@ -1417,6 +1436,7 @@ for tower in towers:
 	x1 = x - s / 2
 	y1 = y - s / 2
 	draw_tower_wall(matrix_tower_wall, x1, y1, s)
+	draw_tower_floor(matrix_tower_floor, x1, y1, s)
 	draw_tower_window(matrix_tower_window, x1, y1, s)
 	draw_tower_parapet(matrix_tower_parapet, x1, y1, s)
 	draw_tower_merlon(matrix_tower_merlon, x1, y1, s)
@@ -1426,8 +1446,8 @@ portcullis_tower_index2 = 0
 portcullis_x = (towers[portcullis_tower_index1][0])
 portcullis_y = (towers[portcullis_tower_index1][1] + towers[portcullis_tower_index2][1]) / 2
 for n in range(-4, +5):
-	matrix_portcullis[portcullis_x - wall_thickness / 2][portcullis_y + n] = Cell.PORTCULLIS
-	for k in range(-wall_thickness / 2 + 2, wall_thickness):
+	matrix_portcullis[portcullis_x - thickness_wall / 2][portcullis_y + n] = Cell.PORTCULLIS
+	for k in range(-thickness_wall / 2 + 2, thickness_wall):
 		matrix_portcullis[portcullis_x + k][portcullis_y + n] = Cell.HOLE
 portcullis_height = 11
 
@@ -1443,7 +1463,7 @@ for n in range(len(towers)):
 	stairs_margin   = 4 # The minimum number of studs of wall on each side of the stairs
 	stairs_width    = 2 # The width of the stairs in studs
 	stairs_offset   = 2 # The number of empty studs at the ground level before the stairs
-	stairs_min_size = base_wall_height + stairs_margin * 2 + stairs_offset
+	stairs_min_size = height_base_wall + stairs_margin * 2 + stairs_offset
 	t1y1 = t1y - t1s / 2
 	t1y2 = t1y + t1s / 2
 	t2y1 = t2y - t2s / 2
@@ -1455,30 +1475,30 @@ for n in range(len(towers)):
 	if t1x < t2x and abs(t1y - t2y) < 4:
 		wx1 = t1x2
 		wx2 = t2x1 - 1
-		wy1 = t1y - wall_thickness / 2
-		wy2 = t1y + wall_thickness / 2
+		wy1 = t1y - thickness_wall / 2
+		wy2 = t1y + thickness_wall / 2
 		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
 		draw_wall(matrix_wall_parapet, wx1, wy1, wx2, wy1)
 		draw_cell(matrix_tower_door, t1x2 - 2, wy1, t1x2 - 1, wy2 + 1, Cell.DOOR)
 		draw_cell(matrix_tower_door, t2x1, wy1, t2x1 + 1, wy2 + 1, Cell.DOOR)
 		if abs(wx1 - wx2) >= stairs_min_size:
-			for n in range(base_wall_height):
+			for n in range(height_base_wall):
 				draw_cell(matrices_stairs[n], wx1 + stairs_margin, wy2, wx1 + stairs_margin + stairs_offset + n - 1, wy2 - stairs_width + 1, Cell.STAIRS)
 	if t1x > t2x and abs(t1y - t2y) < 4:
 		wx1 = t1x1 - 1
 		wx2 = t2x2
-		wy1 = t1y - wall_thickness / 2
-		wy2 = t1y + wall_thickness / 2
+		wy1 = t1y - thickness_wall / 2
+		wy2 = t1y + thickness_wall / 2
 		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
 		draw_wall(matrix_wall_parapet, wx1, wy2, wx2, wy2)
 		draw_cell(matrix_tower_door, t2x2 - 2, wy1 - 1, t2x2 - 1, wy2, Cell.DOOR)
 		draw_cell(matrix_tower_door, t1x1, wy1 - 1, t1x1 + 1, wy2, Cell.DOOR)
 		if abs(wx1 - wx2) >= stairs_min_size:
-			for n in range(base_wall_height):
+			for n in range(height_base_wall):
 				draw_cell(matrices_stairs[n], wx1 - stairs_margin, wy1, wx1 - stairs_margin - stairs_offset - n + 1, wy1 + stairs_width - 1, Cell.STAIRS)
 	if abs(t1x - t2x) < 4 and t1y < t2y:
-		wx1 = t1x - wall_thickness / 2
-		wx2 = t1x + wall_thickness / 2
+		wx1 = t1x - thickness_wall / 2
+		wx2 = t1x + thickness_wall / 2
 		wy1 = t1y2
 		wy2 = t2y1 - 1
 		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
@@ -1486,11 +1506,11 @@ for n in range(len(towers)):
 		draw_cell(matrix_tower_door, wx1 - 1, t1y2 - 2, wx2, t1y2 - 1, Cell.DOOR)
 		draw_cell(matrix_tower_door, wx1 - 1, t2y1, wx2, t2y1 + 1, Cell.DOOR)
 		if abs(wy1 - wy2) >= stairs_min_size:
-			for n in range(base_wall_height):
+			for n in range(height_base_wall):
 				draw_cell(matrices_stairs[n], wx1, wy1 + stairs_margin, wx1 + stairs_width - 1, wy1 + stairs_margin + stairs_offset + n - 1, Cell.STAIRS)
 	if abs(t1x - t2x) < 4 and t1y > t2y:
-		wx1 = t1x - wall_thickness / 2
-		wx2 = t1x + wall_thickness / 2
+		wx1 = t1x - thickness_wall / 2
+		wx2 = t1x + thickness_wall / 2
 		wy1 = t1y1 - 1
 		wy2 = t2y2
 		draw_wall(matrix_wall, wx1, wy1, wx2, wy2)
@@ -1498,40 +1518,57 @@ for n in range(len(towers)):
 		draw_cell(matrix_tower_door, wx1, t2y2 - 2, wx2 + 1, t2y2 - 1, Cell.DOOR)
 		draw_cell(matrix_tower_door, wx1, t1y1, wx2 + 1, t1y1 + 1, Cell.DOOR)
 		if abs(wy1 - wy2) >= stairs_min_size:
-			for n in range(base_wall_height):
+			for n in range(height_base_wall):
 				draw_cell(matrices_stairs[n], wx2, wy1 - stairs_margin, wx2 - stairs_width + 1, wy1 - stairs_margin - stairs_offset - n + 1, Cell.STAIRS)
 
 draw_wall_merlon(matrix_wall_merlon, matrix_wall_parapet)
 
-soldiers = []
-for n in range(4):
-	soldiers.append( (6, 4 * n, 1, n) )
+def place_soldiers(matrix, z, count):
+	map_size = len(matrix)
+	matrix_wall_inner = erode_matrix(map_size, erode_matrix(map_size, matrix_wall))
+	list = []
+	for y in range(map_size):
+		for x in range(map_size):
+			if matrix_wall_inner[x][y]:
+				list.append((x, y))
+	soldiers = []
+	for n in range(count):
+		if len(list) == 0:
+			break
+		point = random.choice(list)
+		x = point[0]
+		y = point[1]
+		facing = random.randrange(0, 3)
+		list = filter(lambda p: distance8(x, y, p[0], p[1]) >= 4, list)
+		soldiers.append( (x, y, z * 3, facing) )
+	return soldiers
+
+soldiers = place_soldiers(matrix_wall, height_base_wall, 30) + place_soldiers(matrix_tower_floor, height_base_wall, 30)
 
 matrix_base = combine_matrix(map_size, matrix_wall, matrix_tower_wall)
 
 for n in range(portcullis_height):
 	matrixes.append(combine_matrix(map_size, matrix_base, matrices_stairs[n], matrix_portcullis))
-for n in range(base_wall_height - portcullis_height):
-	matrixes.append(combine_matrix(map_size, matrix_base, matrices_stairs[n]))
-for n in range(2):
+for n in range(height_base_wall - portcullis_height):
+	matrixes.append(combine_matrix(map_size, matrix_base, matrices_stairs[n], matrix_tower_floor))
+for n in range(height_parapet):
 	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_wall_parapet, matrix_tower_door))
-for n in range(1):
+for n in range(height_merlon):
 	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_wall_merlon, matrix_tower_door))
-for n in range(3):
+for n in range(height_door - height_parapet - height_merlon):
 	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_tower_door))
-for n in range(2):
-	matrixes.append(matrix_tower_wall)
-for n in range(window_height):
-	matrixes.append(matrix_tower_window)
-for n in range(2):
-	matrixes.append(matrix_tower_wall)
-for n in range(window_height):
-	matrixes.append(matrix_tower_window)
+
+for l in range(tower_window_layers):
+	for n in range(height_window_spacing):
+		matrixes.append(matrix_tower_wall)
+	for n in range(height_window):
+		matrixes.append(matrix_tower_window)
+
 for n in range(1):
-	matrixes.append(matrix_tower_wall)
-for n in range(2):
+	matrixes.append(combine_matrix(map_size, matrix_tower_wall, matrix_tower_floor))
+for n in range(height_parapet):
 	matrixes.append(matrix_tower_parapet)
-for n in range(1):
+for n in range(height_merlon):
 	matrixes.append(matrix_tower_merlon)
 
 #matrixes = [matrix_tower_wall, matrix_wall]
