@@ -20,7 +20,7 @@ color_lime             = 27
 color_trans_light_blue = 43
 color_light_bley       = 71
 color_dark_bley        = 72
-
+color_sand_green       = 378
 
 part_baseplate_32x32   = '3811'
 
@@ -323,7 +323,12 @@ def fill_merlons_y(f, x, y1, y2, h, color):
 	pass
 
 def stone_color():
-	return color_light_bley if random.random() > 0.15 else color_dark_bley
+	roll = random.random()
+	if roll < 0.15:
+		return color_dark_bley
+	if roll < 0.20:
+		return color_sand_green
+	return color_light_bley
 
 def export(file, size, river, riverbed, matrixes, soldiers):
 	f = open(file, 'w')
@@ -985,7 +990,7 @@ def prel(x, a, b):
 	return 1.0 * (x - a) / (b - a)
 
 
-random.seed(653167)
+random.seed(53167)
 
 map_size = 32 * 4
 
@@ -997,10 +1002,10 @@ height_window          = 4
 height_base_wall       = 12
 height_portcullis      = 11
 height_parapet         = 2
-height_tower_floor     = 1
+height_tower_floor     = 2
 height_merlon          = 1
 height_door            = 6
-height_window_spacing  = 2
+height_window_spacing  = 3
 tower_window_layers    = 2
 height_tower_top_floor = height_base_wall + height_door + tower_window_layers * (height_window + height_window_spacing) + height_tower_floor
 
